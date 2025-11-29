@@ -1,10 +1,18 @@
 'use client';
 
+import Image from 'next/image';
+
 export default function LoginView({ onLogin }) {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-green-50 to-green-100 p-8 justify-center items-center">
-      <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-8 shadow-xl text-6xl border-4 border-green-200">
-        🐾
+      <div className="w-32 h-32 rounded-full mb-8 shadow-xl overflow-hidden">
+        <Image
+          src="/app logo2.png"
+          alt="BudgeMon Logo"
+          width={128}
+          height={128}
+          className="object-cover w-full h-full"
+        />
       </div>
       <h1 className="text-3xl font-bold text-green-800 mb-2">BudgeMon</h1>
       <p className="text-green-600 mb-8">Your AI Financial Companion</p>
