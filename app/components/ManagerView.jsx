@@ -2,15 +2,26 @@
 
 import { Activity, Plus, ShoppingBag } from 'lucide-react';
 
-export default function ManagerView({ balance, transactions }) {
+export default function ManagerView({ balance, transactions, onAddTransaction }) {
   return (
     <div className="flex flex-col h-full bg-gray-50 px-4 pt-6 pb-24 overflow-y-auto">
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-6 rounded-3xl shadow-lg mb-6">
-        <p className="text-gray-300 text-sm mb-1">Total Balance</p>
-        <h1 className="text-4xl font-bold">${balance.toFixed(2)}</h1>
-        <div className="mt-4 flex items-center gap-2 text-red-300 text-sm">
-          <Activity size={16} />
-          <span>You spent +49% vs last month</span>
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <p className="text-gray-300 text-sm mb-1">Total Balance</p>
+            <h1 className="text-4xl font-bold">${balance.toFixed(2)}</h1>
+            <div className="mt-4 flex items-center gap-2 text-red-300 text-sm">
+              <Activity size={16} />
+              <span>You spent +49% vs last month</span>
+            </div>
+          </div>
+          <button
+            onClick={onAddTransaction}
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 border border-white/30 hover:bg-white/25 transition"
+            aria-label="Add transaction"
+          >
+            <Plus size={20} />
+          </button>
         </div>
       </div>
 
@@ -72,7 +83,16 @@ export default function ManagerView({ balance, transactions }) {
       </div>
 
       <div className="mb-4">
-        <h3 className="font-bold text-gray-800 mb-4 px-2">Recent Activity</h3>
+        <div className="flex items-center justify-between px-2 mb-4">
+          <h3 className="font-bold text-gray-800">Recent Activity</h3>
+          <button
+            onClick={onAddTransaction}
+            className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white text-sm font-semibold rounded-full shadow-sm hover:bg-gray-800 transition"
+          >
+            <Plus size={16} />
+            Add
+          </button>
+        </div>
         <div className="space-y-3">
           {transactions.map((t) => (
             <div key={t.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-gray-50">

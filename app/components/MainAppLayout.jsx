@@ -5,6 +5,7 @@ import CompanionView from './CompanionView';
 import ManagerView from './ManagerView';
 import LeaderboardView from './LeaderboardView';
 import ShopView from './ShopView';
+import AddTransactionView from './AddTransactionView';
 
 export default function MainAppLayout({
   activeTab,
@@ -29,6 +30,10 @@ export default function MainAppLayout({
   inventory,
   onBuyItem,
   onEquipItem,
+  onAddTransaction,
+  isTransactionFormOpen,
+  onCloseTransactionForm,
+  onSubmitTransaction,
 }) {
   return (
     <div className={`h-screen flex flex-col bg-gradient-to-b ${themeClasses} relative overflow-hidden`}>
@@ -47,7 +52,9 @@ export default function MainAppLayout({
             equipped={equipped}
           />
         )}
-        {activeTab === 'dashboard' && <ManagerView balance={balance} transactions={transactions} />}
+        {activeTab === 'dashboard' && (
+          <ManagerView balance={balance} transactions={transactions} onAddTransaction={onAddTransaction} />
+        )}
         {activeTab === 'social' && <LeaderboardView friends={friends} />}
       </div>
 
@@ -86,6 +93,11 @@ export default function MainAppLayout({
             onEquipItem={onEquipItem}
             items={shopItems}
           />
+        </div>
+      )}
+      {isTransactionFormOpen && (
+        <div className="absolute inset-0 z-40 bg-white">
+          <AddTransactionView onClose={onCloseTransactionForm} onSubmit={onSubmitTransaction} />
         </div>
       )}
     </div>

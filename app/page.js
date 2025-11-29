@@ -88,6 +88,37 @@ export default function Page() {
     }
   };
 
+  const openAddTransaction = () => {
+    setCurrentView('add-transaction');
+    setActiveTab('dashboard');
+  };
+
+  const closeAddTransaction = () => {
+    setCurrentView('main');
+  };
+
+  const handleTransactionSubmit = ({ title, amount, category, type, date, note }) => {
+    const numericAmount = Number(amount);
+    if (!title || Number.isNaN(numericAmount) || numericAmount <= 0) {
+      return;
+    }
+
+    const signedAmount = type === 'income' ? Math.abs(numericAmount) : -Math.abs(numericAmount);
+    const newTransaction = {
+      id: Date.now(),
+      title,
+      amount: signedAmount,
+      category,
+      date: date || new Date().toISOString().split('T')[0],
+      note,
+    };
+
+    setTransactions((prev) => [newTransaction, ...prev]);
+    setBalance((prev) => prev + signedAmount);
+    setCurrentView('main');
+    setActiveTab('dashboard');
+  };
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -108,7 +139,7 @@ export default function Page() {
     <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 shadow-2xl overflow-hidden relative">
       {currentView === 'login' && <LoginView onLogin={handleLogin} />}
       {currentView === 'onboarding' && <PetSelectionView onSelectPet={selectPet} />}
-      {(currentView === 'main' || currentView === 'shop') && (
+      {(currentView === 'main' || currentView === 'shop' || currentView === 'add-transaction') && (
         <MainAppLayout
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -132,6 +163,10 @@ export default function Page() {
           inventory={inventory}
           onBuyItem={buyItem}
           onEquipItem={(item) => setEquipped((prev) => ({ ...prev, [item.category]: item.icon }))}
+          onAddTransaction={openAddTransaction}
+          isTransactionFormOpen={currentView === 'add-transaction'}
+          onCloseTransactionForm={closeAddTransaction}
+          onSubmitTransaction={handleTransactionSubmit}
         />
       )}
     </div>
