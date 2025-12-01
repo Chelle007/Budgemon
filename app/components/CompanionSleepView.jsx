@@ -12,10 +12,31 @@ export default function CompanionSleepView({
   accentColorClass,
 }) {
   const [petName, setPetName] = useState('Lumi');
+  const [remainingSeconds, setRemainingSeconds] = useState(3 * 60 * 60); // 3 hours
+
+  // Format seconds as HH:MM:SS
+  const formatTime = (totalSeconds) => {
+    const clamped = Math.max(totalSeconds, 0);
+    const hours = String(Math.floor(clamped / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((clamped % 3600) / 60)).padStart(2, '0');
+    const seconds = String(clamped % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
 
   useEffect(() => {
     setPetName(petType === 'lumi' ? 'Lumi' : 'Luna');
   }, [petType]);
+
+  // Countdown timer that ticks every second
+  useEffect(() => {
+    if (remainingSeconds <= 0) return;
+
+    const intervalId = setInterval(() => {
+      setRemainingSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [remainingSeconds]);
 
   // For now, sleeping mode always uses Lumi's looping sleep GIF as requested
   const petSleepGif = '/lumi-sleep-repeat.gif';
@@ -48,7 +69,7 @@ export default function CompanionSleepView({
       <div className="flex-1 flex flex-col items-center justify-end relative px-4 pb-8 pointer-events-none">
         {/* Sleeping "reply" text above pet */}
         <div className="absolute bottom-[280px] z-20 max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-lg bg-white text-gray-800 border border-gray-100">
-          Zzz... Lumi is sleeping...
+          {`Zzz... Come back in ${formatTime(remainingSeconds)}`}
         </div>
 
         {/* Sleeping Pet Image */}
