@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BadgeDollarSign } from 'lucide-react';
 import Image from 'next/image';
 
 // Wardrobe items mapping
@@ -59,31 +59,37 @@ export default function ShopView({
   const wardrobeItems = WARDROBE_ITEMS;
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={onClose} className="p-2 bg-gray-100 rounded-full">
-            <ArrowLeft size={20} />
+    <div className="flex flex-col h-full bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition"
+            aria-label="Back"
+          >
+            <ArrowLeft size={20} className="text-gray-700" />
           </button>
-          <span className="font-bold text-lg">Pet Shop</span>
-          <div className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200">
-            <span>💰</span>
-            <span className="font-bold text-yellow-800">{gameCurrency}</span>
-          </div>
+          <h1 className="text-xl font-bold text-gray-800">Pet Shop</h1>
+        </div>
+        <div className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200">
+          <BadgeDollarSign size={16} className="text-yellow-800" />
+          <span className="font-bold text-yellow-800">{gameCurrency}</span>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
         {/* Lumi preview at the top */}
         <div className="mb-6 flex justify-center">
-          <div className="relative w-48 h-48">
-            <Image
-              src={lumiImageSrc}
-              alt="Lumi"
-              fill
-              className="object-contain"
-              priority
-            />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="relative w-48 h-48">
+              <Image
+                src={lumiImageSrc}
+                alt="Lumi"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
           </div>
         </div>
 
@@ -108,7 +114,7 @@ export default function ShopView({
             return (
               <div
                 key={item.id}
-                className={`bg-white border rounded-2xl p-4 shadow-sm flex flex-col items-center gap-2 hover:shadow-md transition ${
+                className={`bg-white rounded-2xl p-4 shadow-sm border flex flex-col items-center gap-2 hover:shadow-md transition ${
                   isEquipped ? 'border-green-500 border-2' : 'border-gray-100'
                 }`}
               >
@@ -143,7 +149,7 @@ export default function ShopView({
                 ) : (
                   <button
                     onClick={() => onBuyItem({ id: item.id, name: item.name, price: item.price, category: item.category, icon: item.id })}
-                    className="w-full py-2 bg-green-500 text-white rounded-xl text-sm font-bold shadow-green-200 hover:bg-green-600"
+                    className="w-full py-2 bg-yellow-500 text-white rounded-xl text-sm font-bold shadow-yellow-200 hover:bg-yellow-600"
                   >
                     Buy ${item.price}
                   </button>

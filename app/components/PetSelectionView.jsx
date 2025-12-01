@@ -26,7 +26,7 @@ export default function PetSelectionView({ onSelectPet }) {
             <div className="relative flex flex-col items-center text-center">
               <div className="relative w-36 h-36 mb-3">
                 <Image
-                  src="/lumi.png"
+                  src="/lumi-large.png"
                   alt="Lumi"
                   width={144}
                   height={144}
