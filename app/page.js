@@ -61,12 +61,31 @@ export default function Page({ sleepMode = false } = {}) {
     const lowerInput = content.toLowerCase();
 
     if (lowerInput.includes('spent') || lowerInput.includes('bought') || lowerInput.includes('buy')) {
-      const amount = lowerInput.match(/\d+/);
-      const val = amount ? parseInt(amount[0]) : 10;
+      // Extract amount (supports formats like "$6", "6", "6.50")
+      const amountMatch = content.match(/\$?\s*(\d+(\.\d+)?)/);
+      const val = amountMatch ? parseFloat(amountMatch[1]) : 10;
+
+      // Derive a simple title from the text before the amount
+      let title = 'New Expense';
+      const beforeAmount = content.split('$')[0] || content;
+      const cleanedTitle = beforeAmount
+        .replace(/spent|bought|buy|on|for|i\'?m?|am/gi, ' ')
+        .trim();
+
+      if (cleanedTitle) {
+        // Capitalise first letter, keep rest as‑is
+        title = cleanedTitle.charAt(0).toUpperCase() + cleanedTitle.slice(1);
+      }
 
       setBalance((prev) => prev - val);
       setTransactions((prev) => [
-        { id: Date.now(), title: 'New Expense', amount: -val, date: new Date().toISOString().split('T')[0], category: 'General' },
+        {
+          id: Date.now(),
+          title,
+          amount: -val,
+          date: new Date().toISOString().split('T')[0],
+          category: 'General',
+        },
         ...prev,
       ]);
 
