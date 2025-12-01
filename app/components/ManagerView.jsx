@@ -27,8 +27,8 @@ export default function ManagerView({ balance, transactions, onAddTransaction, o
 
       <div className="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-gray-100">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-gray-800">November Analysis</h3>
-          <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Weekly</span>
+          <h3 className="font-bold text-gray-800">December Analysis</h3>
+          <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Monthly</span>
         </div>
         <div className="flex items-center justify-center gap-8 mb-4">
           <div className="relative w-40 h-40">
