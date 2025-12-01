@@ -7,6 +7,7 @@ import LeaderboardView from './LeaderboardView';
 import ShopView from './ShopView';
 import AddTransactionView from './AddTransactionView';
 import CardManagementView from './CardManagementView';
+import ProfileView from './ProfileView';
 
 export default function MainAppLayout({
   activeTab,
@@ -15,6 +16,7 @@ export default function MainAppLayout({
   accentColorClass,
   petType,
   onOpenShop,
+  onOpenProfile,
   messages,
   chatEndRef,
   inputText,
@@ -42,6 +44,8 @@ export default function MainAppLayout({
   onAddCard,
   onUpdateCard,
   onDeleteCard,
+  isProfileOpen,
+  onCloseProfile,
 }) {
   return (
     <div className={`h-screen flex flex-col bg-gradient-to-b ${themeClasses} relative overflow-hidden`}>
@@ -51,6 +55,7 @@ export default function MainAppLayout({
             petType={petType}
             gameCurrency={gameCurrency}
             onOpenShop={onOpenShop}
+            onOpenProfile={onOpenProfile}
             messages={messages}
             chatEndRef={chatEndRef}
             inputText={inputText}
@@ -126,6 +131,18 @@ export default function MainAppLayout({
             onAddCard={onAddCard}
             onUpdateCard={onUpdateCard}
             onDeleteCard={onDeleteCard}
+          />
+        </div>
+      )}
+      {isProfileOpen && (
+        <div className="absolute inset-0 z-40 bg-white">
+          <ProfileView
+            onClose={onCloseProfile}
+            petType={petType}
+            balance={balance}
+            gameCurrency={gameCurrency}
+            cards={cards}
+            transactions={transactions}
           />
         </div>
       )}

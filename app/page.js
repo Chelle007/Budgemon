@@ -124,6 +124,14 @@ export default function Page() {
     setCurrentView('main');
   };
 
+  const openProfile = () => {
+    setCurrentView('profile');
+  };
+
+  const closeProfile = () => {
+    setCurrentView('main');
+  };
+
   const handleAddCard = (cardData) => {
     const newCard = {
       id: Date.now(),
@@ -195,7 +203,7 @@ export default function Page() {
     <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 shadow-2xl overflow-hidden relative">
       {currentView === 'login' && <LoginView onLogin={handleLogin} />}
       {currentView === 'onboarding' && <PetSelectionView onSelectPet={selectPet} />}
-      {(currentView === 'main' || currentView === 'shop' || currentView === 'add-transaction' || currentView === 'card-management') && (
+      {(currentView === 'main' || currentView === 'shop' || currentView === 'add-transaction' || currentView === 'card-management' || currentView === 'profile') && (
         <MainAppLayout
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -203,6 +211,7 @@ export default function Page() {
           accentColorClass={getAccentColor()}
           petType={petType}
           onOpenShop={() => setCurrentView('shop')}
+          onOpenProfile={openProfile}
           messages={messages}
           chatEndRef={chatEndRef}
           inputText={inputText}
@@ -230,6 +239,8 @@ export default function Page() {
           onAddCard={handleAddCard}
           onUpdateCard={handleUpdateCard}
           onDeleteCard={handleDeleteCard}
+          isProfileOpen={currentView === 'profile'}
+          onCloseProfile={closeProfile}
         />
       )}
     </div>

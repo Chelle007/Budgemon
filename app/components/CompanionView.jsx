@@ -1,12 +1,13 @@
 'use client';
 
-import { Send } from 'lucide-react';
+import { Send, User } from 'lucide-react';
 import PetVisual from './PetVisual';
 
 export default function CompanionView({
   petType,
   gameCurrency,
   onOpenShop,
+  onOpenProfile,
   messages,
   chatEndRef,
   inputText,
@@ -19,19 +20,29 @@ export default function CompanionView({
     onSendMessage(text);
   };
 
+  const petName = petType === 'lumi' ? 'Lumi' : 'Luna';
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-4 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${petType === 'lumi' ? 'bg-cyan-400' : 'bg-purple-500'} animate-pulse`}></div>
-          <span className="font-bold text-gray-700 uppercase tracking-wider text-xs">AI Companion Active</span>
-        </div>
-        <div
-          onClick={onOpenShop}
-          className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 cursor-pointer hover:bg-yellow-200"
-        >
-          <span>💰</span>
-          <span className="font-bold text-yellow-800">{gameCurrency}</span>
+        <h2 className={`text-lg font-bold ${petType === 'lumi' ? 'text-cyan-800' : 'text-purple-800'}`}>
+          {petName}
+        </h2>
+        <div className="flex items-center gap-3">
+          <div
+            onClick={onOpenShop}
+            className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 cursor-pointer hover:bg-yellow-200"
+          >
+            <span>💰</span>
+            <span className="font-bold text-yellow-800">{gameCurrency}</span>
+          </div>
+          <button
+            onClick={onOpenProfile}
+            className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition"
+            aria-label="Profile"
+          >
+            <User size={20} className="text-gray-700" />
+          </button>
         </div>
       </div>
 
