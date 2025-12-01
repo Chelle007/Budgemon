@@ -1,7 +1,8 @@
 'use client';
 
-import { Send, User } from 'lucide-react';
-import PetVisual from './PetVisual';
+import { useState, useEffect, useRef } from 'react';
+import { Send, User, BadgeDollarSign } from 'lucide-react';
+import Image from 'next/image';
 
 export default function CompanionView({
   petType,
@@ -16,11 +17,61 @@ export default function CompanionView({
   accentColorClass,
   equipped,
 }) {
+  const [speechBubble, setSpeechBubble] = useState({ text: '', visible: false, opacity: 0 });
+  const speechTimeoutRef = useRef(null);
+  const fadeTimeoutRef = useRef(null);
+  const previousMessagesLengthRef = useRef(messages.length);
+
   const presetMessage = (text) => {
     onSendMessage(text);
   };
 
   const petName = petType === 'lumi' ? 'Lumi' : 'Luna';
+  const petImage = petType === 'lumi' ? '/lumi.png' : '/luna.png';
+
+  // Watch for new bot messages and show speech bubble
+  useEffect(() => {
+    // Check if a new bot message was added
+    if (messages.length > previousMessagesLengthRef.current) {
+      const lastMessage = messages[messages.length - 1];
+      
+      // Only show speech bubble for bot messages
+      if (lastMessage && lastMessage.sender === 'bot') {
+        // Clear any existing timeouts
+        if (speechTimeoutRef.current) {
+          clearTimeout(speechTimeoutRef.current);
+        }
+        if (fadeTimeoutRef.current) {
+          clearTimeout(fadeTimeoutRef.current);
+        }
+
+        // Show the speech bubble immediately
+        setSpeechBubble({ text: lastMessage.text, visible: true, opacity: 1 });
+
+        // Start fading out after 3.5 seconds
+        speechTimeoutRef.current = setTimeout(() => {
+          setSpeechBubble((prev) => ({ ...prev, opacity: 0 }));
+          
+          // Hide completely after fade animation
+          fadeTimeoutRef.current = setTimeout(() => {
+            setSpeechBubble({ text: '', visible: false, opacity: 0 });
+          }, 500); // Match the transition duration
+        }, 3500);
+      }
+    }
+    
+    previousMessagesLengthRef.current = messages.length;
+
+    // Cleanup on unmount
+    return () => {
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+    };
+  }, [messages]);
 
   return (
     <div className="flex flex-col h-full">
@@ -33,7 +84,7 @@ export default function CompanionView({
             onClick={onOpenShop}
             className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 cursor-pointer hover:bg-yellow-200"
           >
-            <span>💰</span>
+            <BadgeDollarSign size={18} className="text-yellow-800" />
             <span className="font-bold text-yellow-800">{gameCurrency}</span>
           </div>
           <button
@@ -46,13 +97,27 @@ export default function CompanionView({
         </div>
       </div>
 
-      <div className="flex-shrink-0">
-        <PetVisual petType={petType} equipped={equipped} />
-        <div className="text-center mb-4">
-          <h2 className={`text-2xl font-bold ${petType === 'lumi' ? 'text-cyan-800' : 'text-purple-800'}`}>
-            {petType === 'lumi' ? 'Lumi' : 'Luna'}
-          </h2>
-          <p className="text-xs text-gray-500">Level 5 • Healthy</p>
+      <div className="flex-1 flex flex-col items-center justify-end relative px-4 pb-8">
+        {/* Speech Bubble - positioned above pet image */}
+        {speechBubble.visible && (
+          <div
+            className="absolute bottom-[280px] z-20 max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-lg bg-white text-gray-800 border border-gray-100 transition-opacity duration-500"
+            style={{ opacity: speechBubble.opacity }}
+          >
+            {speechBubble.text}
+          </div>
+        )}
+
+        {/* Pet Image */}
+        <div className="relative w-64 h-64 flex items-center justify-center">
+          <Image
+            src={petImage}
+            alt={petName}
+            width={256}
+            height={256}
+            className="object-contain"
+            priority
+          />
         </div>
       </div>
 
@@ -77,23 +142,6 @@ export default function CompanionView({
             🍜 Lunch $12
           </button>
         </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-4">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
-                msg.sender === 'user'
-                  ? 'bg-gray-800 text-white rounded-br-none'
-                  : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
-              }`}
-            >
-              {msg.text}
-            </div>
-          </div>
-        ))}
-        <div ref={chatEndRef} />
       </div>
 
       <div className="p-4 bg-white border-t border-gray-100 pb-20 md:pb-4">
