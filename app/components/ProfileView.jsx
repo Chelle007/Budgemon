@@ -77,7 +77,7 @@ export default function ProfileView({ onClose }) {
             <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-200 shrink-0 border border-gray-200">
               {/* Placeholder for user image */}
               <img 
-                src="/api/placeholder/100/100" 
+                src="profile.jpg" 
                 alt="Profile" 
                 className="w-full h-full object-cover"
               />
