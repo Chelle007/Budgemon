@@ -115,6 +115,7 @@ export default function MainAppLayout({
             onBuyItem={onBuyItem}
             onEquipItem={onEquipItem}
             items={shopItems}
+            equipped={equipped}
           />
         </div>
       )}

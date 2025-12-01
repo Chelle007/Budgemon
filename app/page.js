@@ -227,7 +227,19 @@ export default function Page() {
           shopItems={SHOP_ITEMS}
           inventory={inventory}
           onBuyItem={buyItem}
-          onEquipItem={(item) => setEquipped((prev) => ({ ...prev, [item.category]: item.icon }))}
+          onEquipItem={(item) => {
+            if (item.icon === null) {
+              // Unequip: remove the property
+              setEquipped((prev) => {
+                const newEquipped = { ...prev };
+                delete newEquipped[item.category];
+                return newEquipped;
+              });
+            } else {
+              // Equip: set the property
+              setEquipped((prev) => ({ ...prev, [item.category]: item.icon }));
+            }
+          }}
           onAddTransaction={openAddTransaction}
           isTransactionFormOpen={currentView === 'add-transaction'}
           onCloseTransactionForm={closeAddTransaction}
