@@ -5,7 +5,7 @@ import { ArrowLeft, Check } from 'lucide-react';
 
 const CATEGORY_OPTIONS = ['Food', 'Shopping', 'Transport', 'Bills', 'Entertainment', 'Savings', 'Other'];
 
-export default function AddTransactionView({ onClose, onSubmit }) {
+export default function AddTransactionView({ onClose, onSubmit, cards = [] }) {
   const today = new Date().toISOString().split('T')[0];
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
@@ -13,6 +13,7 @@ export default function AddTransactionView({ onClose, onSubmit }) {
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
+  const [selectedCardId, setSelectedCardId] = useState(cards.length > 0 ? cards[0].id : null);
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
@@ -35,6 +36,7 @@ export default function AddTransactionView({ onClose, onSubmit }) {
       type,
       date,
       note: note.trim(),
+      cardId: selectedCardId,
     });
   };
 
@@ -125,6 +127,35 @@ export default function AddTransactionView({ onClose, onSubmit }) {
             ))}
           </div>
         </label>
+
+        {cards.length > 0 && (
+          <label className="block">
+            <span className="text-sm font-semibold text-gray-600">Card</span>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {cards.map((card) => (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={() => setSelectedCardId(card.id)}
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold relative overflow-hidden ${
+                    selectedCardId === card.id
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-gray-50 text-gray-600 border-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: card.color }}
+                    />
+                    <span className="truncate">{card.name}</span>
+                  </div>
+                  {selectedCardId === card.id && <Check size={16} />}
+                </button>
+              ))}
+            </div>
+          </label>
+        )}
 
         <label className="block">
           <span className="text-sm font-semibold text-gray-600">Notes (optional)</span>

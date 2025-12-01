@@ -115,7 +115,7 @@ export default function MainAppLayout({
       )}
       {isTransactionFormOpen && (
         <div className="absolute inset-0 z-40 bg-white">
-          <AddTransactionView onClose={onCloseTransactionForm} onSubmit={onSubmitTransaction} />
+          <AddTransactionView onClose={onCloseTransactionForm} onSubmit={onSubmitTransaction} cards={cards} />
         </div>
       )}
       {isCardManagementOpen && (

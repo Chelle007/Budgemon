@@ -140,7 +140,7 @@ export default function Page() {
     setCards((prev) => prev.filter((card) => card.id !== cardId));
   };
 
-  const handleTransactionSubmit = ({ title, amount, category, type, date, note }) => {
+  const handleTransactionSubmit = ({ title, amount, category, type, date, note, cardId }) => {
     const numericAmount = Number(amount);
     if (!title || Number.isNaN(numericAmount) || numericAmount <= 0) {
       return;
@@ -154,10 +154,23 @@ export default function Page() {
       category,
       date: date || new Date().toISOString().split('T')[0],
       note,
+      cardId,
     };
 
     setTransactions((prev) => [newTransaction, ...prev]);
     setBalance((prev) => prev + signedAmount);
+    
+    // Update card balance if cardId is provided
+    if (cardId) {
+      setCards((prev) =>
+        prev.map((card) =>
+          card.id === cardId
+            ? { ...card, balance: (card.balance || 0) + signedAmount }
+            : card
+        )
+      );
+    }
+    
     setCurrentView('main');
     setActiveTab('dashboard');
   };
