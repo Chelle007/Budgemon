@@ -18,8 +18,11 @@ export default function CompanionView({
   equipped,
 }) {
   const [speechBubble, setSpeechBubble] = useState({ text: '', visible: false, opacity: 0 });
+  const [isTalking, setIsTalking] = useState(false);
   const speechTimeoutRef = useRef(null);
   const fadeTimeoutRef = useRef(null);
+  const talkingTimeoutRef = useRef(null);
+  const bubbleShowTimeoutRef = useRef(null);
   const previousMessagesLengthRef = useRef(messages.length);
 
   const presetMessage = (text) => {
@@ -28,6 +31,7 @@ export default function CompanionView({
 
   const petName = petType === 'lumi' ? 'Lumi' : 'Luna';
   const petImage = petType === 'lumi' ? '/lumi.png' : '/luna.png';
+  const petTalkGif = petType === 'lumi' ? '/lumi-talk.gif' : '/lumi-talk.gif'; // Using lumi-talk.gif for now, can add luna-talk.gif later if needed
 
   // Watch for new bot messages and show speech bubble
   useEffect(() => {
@@ -44,11 +48,30 @@ export default function CompanionView({
         if (fadeTimeoutRef.current) {
           clearTimeout(fadeTimeoutRef.current);
         }
+        if (talkingTimeoutRef.current) {
+          clearTimeout(talkingTimeoutRef.current);
+        }
+        if (bubbleShowTimeoutRef.current) {
+          clearTimeout(bubbleShowTimeoutRef.current);
+        }
 
-        // Show the speech bubble immediately
-        setSpeechBubble({ text: lastMessage.text, visible: true, opacity: 1 });
+        // Show the talking GIF animation immediately
+        setIsTalking(true);
 
-        // Start fading out after 3.5 seconds
+        // Initialize speech bubble as invisible (will fade in at 2 seconds)
+        setSpeechBubble({ text: lastMessage.text, visible: true, opacity: 0 });
+
+        // Show speech bubble with fade-in at 2 seconds
+        bubbleShowTimeoutRef.current = setTimeout(() => {
+          setSpeechBubble((prev) => ({ ...prev, opacity: 1 }));
+        }, 2000);
+
+        // Switch back to static image after 5 seconds (let GIF play fully)
+        talkingTimeoutRef.current = setTimeout(() => {
+          setIsTalking(false);
+        }, 5000);
+
+        // Start fading out speech bubble after 6.5 seconds (after talking animation ends)
         speechTimeoutRef.current = setTimeout(() => {
           setSpeechBubble((prev) => ({ ...prev, opacity: 0 }));
           
@@ -56,7 +79,7 @@ export default function CompanionView({
           fadeTimeoutRef.current = setTimeout(() => {
             setSpeechBubble({ text: '', visible: false, opacity: 0 });
           }, 500); // Match the transition duration
-        }, 3500);
+        }, 6500);
       }
     }
     
@@ -69,6 +92,12 @@ export default function CompanionView({
       }
       if (fadeTimeoutRef.current) {
         clearTimeout(fadeTimeoutRef.current);
+      }
+      if (talkingTimeoutRef.current) {
+        clearTimeout(talkingTimeoutRef.current);
+      }
+      if (bubbleShowTimeoutRef.current) {
+        clearTimeout(bubbleShowTimeoutRef.current);
       }
     };
   }, [messages]);
@@ -110,14 +139,25 @@ export default function CompanionView({
 
         {/* Pet Image */}
         <div className="relative w-64 h-64 flex items-center justify-center">
-          <Image
-            src={petImage}
-            alt={petName}
-            width={256}
-            height={256}
-            className="object-contain"
-            priority
-          />
+          {isTalking ? (
+            <Image
+              src={petTalkGif}
+              alt={`${petName} talking`}
+              width={256}
+              height={256}
+              className="object-contain"
+              unoptimized
+            />
+          ) : (
+            <Image
+              src={petImage}
+              alt={petName}
+              width={256}
+              height={256}
+              className="object-contain"
+              priority
+            />
+          )}
         </div>
       </div>
 
