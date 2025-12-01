@@ -1,11 +1,12 @@
 'use client';
 
-import { BarChart2, MessageCircle, Trophy } from 'lucide-react';
+import { BarChart2, MessageCircle, Trophy, Plus } from 'lucide-react';
 import CompanionView from './CompanionView';
 import ManagerView from './ManagerView';
 import LeaderboardView from './LeaderboardView';
 import ShopView from './ShopView';
 import AddTransactionView from './AddTransactionView';
+import CardManagementView from './CardManagementView';
 
 export default function MainAppLayout({
   activeTab,
@@ -34,6 +35,13 @@ export default function MainAppLayout({
   isTransactionFormOpen,
   onCloseTransactionForm,
   onSubmitTransaction,
+  onOpenCardManagement,
+  isCardManagementOpen,
+  onCloseCardManagement,
+  cards,
+  onAddCard,
+  onUpdateCard,
+  onDeleteCard,
 }) {
   return (
     <div className={`h-screen flex flex-col bg-gradient-to-b ${themeClasses} relative overflow-hidden`}>
@@ -53,10 +61,20 @@ export default function MainAppLayout({
           />
         )}
         {activeTab === 'dashboard' && (
-          <ManagerView balance={balance} transactions={transactions} onAddTransaction={onAddTransaction} />
+          <ManagerView balance={balance} transactions={transactions} onAddTransaction={onAddTransaction} onOpenCardManagement={onOpenCardManagement} />
         )}
         {activeTab === 'social' && <LeaderboardView friends={friends} />}
       </div>
+
+      {activeTab === 'dashboard' && (
+        <button
+          onClick={onAddTransaction}
+          className="absolute bottom-28 right-4 w-14 h-14 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 transition-all hover:scale-110 flex items-center justify-center z-30"
+          aria-label="Add transaction"
+        >
+          <Plus size={24} />
+        </button>
+      )}
 
       <div className="bg-white border-t border-gray-200 flex justify-around items-center p-4 pb-6 shadow-lg z-20">
         <button
@@ -98,6 +116,17 @@ export default function MainAppLayout({
       {isTransactionFormOpen && (
         <div className="absolute inset-0 z-40 bg-white">
           <AddTransactionView onClose={onCloseTransactionForm} onSubmit={onSubmitTransaction} />
+        </div>
+      )}
+      {isCardManagementOpen && (
+        <div className="absolute inset-0 z-40 bg-white">
+          <CardManagementView
+            cards={cards}
+            onClose={onCloseCardManagement}
+            onAddCard={onAddCard}
+            onUpdateCard={onUpdateCard}
+            onDeleteCard={onDeleteCard}
+          />
         </div>
       )}
     </div>

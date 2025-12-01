@@ -1,10 +1,10 @@
 'use client';
 
-import { Activity, Plus, ShoppingBag } from 'lucide-react';
+import { Activity, Plus, ShoppingBag, CreditCard } from 'lucide-react';
 
-export default function ManagerView({ balance, transactions, onAddTransaction }) {
+export default function ManagerView({ balance, transactions, onAddTransaction, onOpenCardManagement }) {
   return (
-    <div className="flex flex-col h-full bg-gray-50 px-4 pt-6 pb-24 overflow-y-auto">
+    <div className="relative flex flex-col h-full bg-gray-50 px-4 pt-6 pb-24 overflow-y-auto">
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-6 rounded-3xl shadow-lg mb-6">
         <div className="flex justify-between items-start gap-4">
           <div>
@@ -16,11 +16,11 @@ export default function ManagerView({ balance, transactions, onAddTransaction })
             </div>
           </div>
           <button
-            onClick={onAddTransaction}
+            onClick={onOpenCardManagement}
             className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 border border-white/30 hover:bg-white/25 transition"
-            aria-label="Add transaction"
+            aria-label="Manage cards"
           >
-            <Plus size={20} />
+            <CreditCard size={20} />
           </button>
         </div>
       </div>
@@ -30,25 +30,92 @@ export default function ManagerView({ balance, transactions, onAddTransaction })
           <h3 className="font-bold text-gray-800">November Analysis</h3>
           <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Weekly</span>
         </div>
-        <div className="flex items-end justify-between h-32 gap-2 mb-2">
-          <div className="w-full bg-red-100 rounded-t-lg relative group h-[42%]">
-            <div className="absolute bottom-0 w-full bg-red-400 rounded-t-lg h-full transition-all group-hover:bg-red-500"></div>
+        <div className="flex items-center justify-center gap-8 mb-4">
+          <div className="relative w-40 h-40">
+            <svg viewBox="0 0 100 100" className="transform -rotate-90">
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#FEE2E2"
+                strokeWidth="20"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#F87171"
+                strokeWidth="20"
+                strokeDasharray={`${42 * 2.513} 251.3`}
+                className="transition-all hover:opacity-80"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#93C5FD"
+                strokeWidth="20"
+                strokeDasharray={`${30 * 2.513} 251.3`}
+                strokeDashoffset={`-${42 * 2.513}`}
+                className="transition-all hover:opacity-80"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#86EFAC"
+                strokeWidth="20"
+                strokeDasharray={`${18 * 2.513} 251.3`}
+                strokeDashoffset={`-${(42 + 30) * 2.513}`}
+                className="transition-all hover:opacity-80"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#FDE047"
+                strokeWidth="20"
+                strokeDasharray={`${10 * 2.513} 251.3`}
+                strokeDashoffset={`-${(42 + 30 + 18) * 2.513}`}
+                className="transition-all hover:opacity-80"
+              />
+            </svg>
           </div>
-          <div className="w-full bg-blue-100 rounded-t-lg relative group h-[30%]">
-            <div className="absolute bottom-0 w-full bg-blue-400 rounded-t-lg h-full transition-all group-hover:bg-blue-500"></div>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-400"></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-800">Food</span>
+                <span className="text-xs text-gray-500">42%</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-800">Leisure</span>
+                <span className="text-xs text-gray-500">30%</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-400"></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-800">Travel</span>
+                <span className="text-xs text-gray-500">18%</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-800">Subs</span>
+                <span className="text-xs text-gray-500">10%</span>
+              </div>
+            </div>
           </div>
-          <div className="w-full bg-green-100 rounded-t-lg relative group h-[18%]">
-            <div className="absolute bottom-0 w-full bg-green-400 rounded-t-lg h-full transition-all group-hover:bg-green-500"></div>
-          </div>
-          <div className="w-full bg-yellow-100 rounded-t-lg relative group h-[10%]">
-            <div className="absolute bottom-0 w-full bg-yellow-400 rounded-t-lg h-full transition-all group-hover:bg-yellow-500"></div>
-          </div>
-        </div>
-        <div className="flex justify-between text-xs text-gray-400">
-          <span>Food</span>
-          <span>Leisure</span>
-          <span>Travel</span>
-          <span>Subs</span>
         </div>
       </div>
 
@@ -83,15 +150,8 @@ export default function ManagerView({ balance, transactions, onAddTransaction })
       </div>
 
       <div className="mb-4">
-        <div className="flex items-center justify-between px-2 mb-4">
+        <div className="flex items-center px-2 mb-4">
           <h3 className="font-bold text-gray-800">Recent Activity</h3>
-          <button
-            onClick={onAddTransaction}
-            className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white text-sm font-semibold rounded-full shadow-sm hover:bg-gray-800 transition"
-          >
-            <Plus size={16} />
-            Add
-          </button>
         </div>
         <div className="space-y-3">
           {transactions.map((t) => (

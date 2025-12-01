@@ -16,6 +16,24 @@ export default function Page() {
   const [inventory, setInventory] = useState([]);
   const [equipped, setEquipped] = useState({});
   const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
+  const [cards, setCards] = useState([
+    {
+      id: 1,
+      name: 'UOB',
+      cardNumber: '4532123456789012',
+      cardholderName: 'Chloe Lee',
+      balance: 300.00,
+      color: '#3B82F6',
+    },
+    {
+      id: 2,
+      name: 'DBS',
+      cardNumber: '5555123456789012',
+      cardholderName: 'Chloe Lee',
+      balance: 249.50,
+      color: '#8B5CF6',
+    },
+  ]);
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -97,6 +115,31 @@ export default function Page() {
     setCurrentView('main');
   };
 
+  const openCardManagement = () => {
+    setCurrentView('card-management');
+    setActiveTab('dashboard');
+  };
+
+  const closeCardManagement = () => {
+    setCurrentView('main');
+  };
+
+  const handleAddCard = (cardData) => {
+    const newCard = {
+      id: Date.now(),
+      ...cardData,
+    };
+    setCards((prev) => [...prev, newCard]);
+  };
+
+  const handleUpdateCard = (cardId, cardData) => {
+    setCards((prev) => prev.map((card) => (card.id === cardId ? { ...card, ...cardData } : card)));
+  };
+
+  const handleDeleteCard = (cardId) => {
+    setCards((prev) => prev.filter((card) => card.id !== cardId));
+  };
+
   const handleTransactionSubmit = ({ title, amount, category, type, date, note }) => {
     const numericAmount = Number(amount);
     if (!title || Number.isNaN(numericAmount) || numericAmount <= 0) {
@@ -139,7 +182,7 @@ export default function Page() {
     <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 shadow-2xl overflow-hidden relative">
       {currentView === 'login' && <LoginView onLogin={handleLogin} />}
       {currentView === 'onboarding' && <PetSelectionView onSelectPet={selectPet} />}
-      {(currentView === 'main' || currentView === 'shop' || currentView === 'add-transaction') && (
+      {(currentView === 'main' || currentView === 'shop' || currentView === 'add-transaction' || currentView === 'card-management') && (
         <MainAppLayout
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -167,6 +210,13 @@ export default function Page() {
           isTransactionFormOpen={currentView === 'add-transaction'}
           onCloseTransactionForm={closeAddTransaction}
           onSubmitTransaction={handleTransactionSubmit}
+          onOpenCardManagement={openCardManagement}
+          isCardManagementOpen={currentView === 'card-management'}
+          onCloseCardManagement={closeCardManagement}
+          cards={cards}
+          onAddCard={handleAddCard}
+          onUpdateCard={handleUpdateCard}
+          onDeleteCard={handleDeleteCard}
         />
       )}
     </div>
