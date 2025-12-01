@@ -2,6 +2,7 @@
 
 import { BarChart2, MessageCircle, Trophy, Plus } from 'lucide-react';
 import CompanionView from './CompanionView';
+import CompanionSleepView from './CompanionSleepView';
 import ManagerView from './ManagerView';
 import LeaderboardView from './LeaderboardView';
 import ShopView from './ShopView';
@@ -51,7 +52,7 @@ export default function MainAppLayout({
     <div className={`h-screen flex flex-col bg-gradient-to-b ${themeClasses} relative overflow-hidden`}>
       <div className="flex-1 relative overflow-hidden">
         {activeTab === 'companion' && (
-          <CompanionView
+          <CompanionSleepView
             petType={petType}
             gameCurrency={gameCurrency}
             onOpenShop={onOpenShop}
