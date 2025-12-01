@@ -145,7 +145,7 @@ export default function CompanionView({
               alt={`${petName} talking`}
               width={256}
               height={256}
-              className="object-contain"
+              className="w-full h-full object-contain"
               unoptimized
             />
           ) : (
@@ -154,7 +154,7 @@ export default function CompanionView({
               alt={petName}
               width={256}
               height={256}
-              className="object-contain"
+              className="w-full h-full object-contain"
               priority
             />
           )}
