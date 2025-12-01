@@ -47,25 +47,35 @@ export default function MainAppLayout({
   onDeleteCard,
   isProfileOpen,
   onCloseProfile,
+  sleepMode = false,
 }) {
   return (
     <div className={`h-screen flex flex-col bg-gradient-to-b ${themeClasses} relative overflow-hidden`}>
       <div className="flex-1 relative overflow-hidden">
-        {activeTab === 'companion' && (
-          <CompanionSleepView
-            petType={petType}
-            gameCurrency={gameCurrency}
-            onOpenShop={onOpenShop}
-            onOpenProfile={onOpenProfile}
-            messages={messages}
-            chatEndRef={chatEndRef}
-            inputText={inputText}
-            setInputText={setInputText}
-            onSendMessage={onSendMessage}
-            accentColorClass={accentColorClass}
-            equipped={equipped}
-          />
-        )}
+        {activeTab === 'companion' &&
+          (sleepMode ? (
+            <CompanionSleepView
+              petType={petType}
+              gameCurrency={gameCurrency}
+              onOpenShop={onOpenShop}
+              onOpenProfile={onOpenProfile}
+              accentColorClass={accentColorClass}
+            />
+          ) : (
+            <CompanionView
+              petType={petType}
+              gameCurrency={gameCurrency}
+              onOpenShop={onOpenShop}
+              onOpenProfile={onOpenProfile}
+              messages={messages}
+              chatEndRef={chatEndRef}
+              inputText={inputText}
+              setInputText={setInputText}
+              onSendMessage={onSendMessage}
+              accentColorClass={accentColorClass}
+              equipped={equipped}
+            />
+          ))}
         {activeTab === 'dashboard' && (
           <ManagerView balance={balance} transactions={transactions} onAddTransaction={onAddTransaction} onOpenCardManagement={onOpenCardManagement} />
         )}

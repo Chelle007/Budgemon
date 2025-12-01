@@ -6,7 +6,7 @@ import PetSelectionView from './components/PetSelectionView';
 import MainAppLayout from './components/MainAppLayout';
 import { FRIENDS_LEADERBOARD, SHOP_ITEMS, INITIAL_TRANSACTIONS } from './constants/mockData';
 
-export default function Page() {
+export default function Page({ sleepMode = false } = {}) {
   const [currentView, setCurrentView] = useState('login');
   const [activeTab, setActiveTab] = useState('companion');
 
@@ -253,6 +253,7 @@ export default function Page() {
           onDeleteCard={handleDeleteCard}
           isProfileOpen={currentView === 'profile'}
           onCloseProfile={closeProfile}
+          sleepMode={sleepMode}
         />
       )}
     </div>
