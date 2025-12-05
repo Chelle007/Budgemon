@@ -379,7 +379,7 @@ export function UserProvider({ children }) {
       // If Gemini detected a transaction, save it
       if (geminiData.isTransaction && geminiData.type && geminiData.amount !== null && geminiData.amount !== undefined) {
         console.log('Transaction detected, saving...');
-        // Find card ID if card name was mentioned
+        // Find card ID if card name was mentioned, default to Cash if not specified
         let cardId = null;
         if (geminiData.card) {
           const matchedCard = cards.find(
@@ -387,6 +387,14 @@ export function UserProvider({ children }) {
           );
           if (matchedCard) {
             cardId = matchedCard.id;
+          }
+        }
+        
+        // Default to Cash card if no card specified or not found
+        if (!cardId) {
+          const cashCard = cards.find((c) => c.name.toLowerCase() === 'cash');
+          if (cashCard) {
+            cardId = cashCard.id;
           }
         }
 
