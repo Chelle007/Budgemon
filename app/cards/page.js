@@ -225,7 +225,7 @@ export default function CardsPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Chase Sapphire"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
                     required
                   />
                 </div>
@@ -243,7 +243,7 @@ export default function CardsPage() {
                     }}
                     placeholder="1234 5678 9012 3456"
                     maxLength={16}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono text-gray-900"
                   />
                 </div>
 
@@ -256,7 +256,7 @@ export default function CardsPage() {
                     value={formData.cardholderName}
                     onChange={(e) => setFormData({ ...formData, cardholderName: e.target.value })}
                     placeholder="John Doe"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
                   />
                 </div>
 
@@ -270,7 +270,7 @@ export default function CardsPage() {
                     value={formData.balance}
                     onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
                   />
                 </div>
 
