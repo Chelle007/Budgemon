@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BarChart2, MessageCircle, Trophy, Plus, Send, User, BadgeDollarSign, Activity, ShoppingBag, CreditCard, Crown, Medal } from 'lucide-react';
+import { BarChart2, MessageCircle, Trophy, Plus, Send, User, BadgeDollarSign, Activity, ShoppingBag, CreditCard, Crown, Medal, Edit2, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { FRIENDS_LEADERBOARD } from '../constants/mockData';
@@ -11,7 +11,7 @@ import { useUser } from '../context/UserContext';
 function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, petType, gameCurrency, equipped, balance, transactions, messages, handleSendMessage, cards } = useUser();
+  const { user, loading, petType, gameCurrency, equipped, balance, transactions, messages, handleSendMessage, cards, handleTransactionDelete, fetchTransactions } = useUser();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'companion');
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef(null);
@@ -125,6 +125,10 @@ function AppContent() {
             filter: `user_id=eq.${user.id}`,
           },
           () => {
+            // Refresh transactions from context when database changes
+            if (fetchTransactions) {
+              fetchTransactions().catch(err => console.error('Error refreshing transactions:', err));
+            }
             loadManagerData();
           }
         )
@@ -134,7 +138,7 @@ function AppContent() {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, activeTab, cards]);
+  }, [user, activeTab]); // Removed cards and fetchTransactions from dependencies to prevent infinite loops
 
   // Update manager balance and transactions when UserContext cards or transactions change
   // This runs whenever cards or transactions change, ensuring data is always up-to-date
@@ -906,19 +910,43 @@ function AppContent() {
                         managerTransactions.slice(0, 10).map((t) => {
                           const amount = parseFloat(t.amount || 0);
                           return (
-                            <div key={t.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-gray-50">
-                              <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-full ${amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                            <div key={t.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className={`p-2 rounded-full flex-shrink-0 ${amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                   {amount > 0 ? <Plus size={16} /> : <ShoppingBag size={16} />}
                                 </div>
-                                <div>
-                                  <p className="font-bold text-gray-800">{t.title || 'Untitled'}</p>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-gray-800 truncate">{t.title || 'Untitled'}</p>
                                   <p className="text-xs text-gray-500">{t.category || 'Other'}</p>
                                 </div>
                               </div>
-                              <span className={`font-bold ${amount > 0 ? 'text-green-600' : 'text-gray-800'}`}>
-                                {amount > 0 ? '+' : ''}${Math.abs(amount).toFixed(2)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-bold ${amount > 0 ? 'text-green-600' : 'text-gray-800'}`}>
+                                  {amount > 0 ? '+' : ''}${Math.abs(amount).toFixed(2)}
+                                </span>
+                                <button
+                                  onClick={() => router.push(`/transactions/edit/${t.id}`)}
+                                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition"
+                                  aria-label="Edit transaction"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+                                      try {
+                                        await handleTransactionDelete(t.id);
+                                      } catch (error) {
+                                        alert('Failed to delete transaction. Please try again.');
+                                      }
+                                    }
+                                  }}
+                                  className="p-2 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600 transition"
+                                  aria-label="Delete transaction"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </div>
                           );
                         })

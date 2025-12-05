@@ -659,6 +659,199 @@ export function UserProvider({ children }) {
     }
   };
 
+  const fetchTransactions = async () => {
+    if (!user) return;
+
+    try {
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false, nullsFirst: false })
+        .limit(100);
+
+      if (transactionsData && !transactionsError) {
+        setTransactions(transactionsData);
+        const total = transactionsData.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+        setBalance(total);
+        return transactionsData;
+      } else {
+        throw transactionsError;
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      throw error;
+    }
+  };
+
+  const handleTransactionUpdate = async (transactionId, { title, amount, category, type, date, note, cardId }) => {
+    if (!user) return;
+
+    const numericAmount = Number(amount);
+    if (!title || Number.isNaN(numericAmount) || numericAmount <= 0) {
+      return;
+    }
+
+    // Get the old transaction to calculate balance difference
+    const oldTransaction = transactions.find(t => t.id === transactionId);
+    if (!oldTransaction) {
+      alert('Transaction not found.');
+      return;
+    }
+
+    const oldAmount = parseFloat(oldTransaction.amount || 0);
+    const signedAmount = type === 'income' ? Math.abs(numericAmount) : -Math.abs(numericAmount);
+    const amountDiff = signedAmount - oldAmount;
+
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({
+          title,
+          amount: signedAmount,
+          category,
+          type,
+          date: date || new Date().toISOString().split('T')[0],
+          note,
+          card_id: cardId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', transactionId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (!error && data) {
+        // Update transactions state
+        setTransactions((prev) => prev.map((t) => (t.id === transactionId ? data : t)));
+        setBalance((prev) => prev + amountDiff);
+
+        // Update card balances
+        const oldCardId = oldTransaction.card_id;
+        
+        if (oldCardId === cardId) {
+          // Same card: update by the difference
+          if (cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+              const currentBalance = parseFloat(card.balance) || 0;
+              const newBalance = currentBalance - oldAmount + signedAmount;
+              await supabase
+                .from('cards')
+                .update({ balance: newBalance })
+                .eq('id', cardId)
+                .eq('user_id', user.id);
+
+              setCards((prev) =>
+                prev.map((c) =>
+                  c.id === cardId ? { ...c, balance: newBalance } : c
+                )
+              );
+            }
+          }
+        } else {
+          // Different cards (or card changed from/to null)
+          // Remove old amount from old card
+          if (oldCardId) {
+            const oldCard = cards.find(c => c.id === oldCardId);
+            if (oldCard) {
+              const oldCardNewBalance = (parseFloat(oldCard.balance) || 0) - oldAmount;
+              await supabase
+                .from('cards')
+                .update({ balance: oldCardNewBalance })
+                .eq('id', oldCardId)
+                .eq('user_id', user.id);
+
+              setCards((prev) =>
+                prev.map((c) =>
+                  c.id === oldCardId ? { ...c, balance: oldCardNewBalance } : c
+                )
+              );
+            }
+          }
+          
+          // Add new amount to new card
+          if (cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+              const newBalance = (parseFloat(card.balance) || 0) + signedAmount;
+              await supabase
+                .from('cards')
+                .update({ balance: newBalance })
+                .eq('id', cardId)
+                .eq('user_id', user.id);
+
+              setCards((prev) =>
+                prev.map((c) =>
+                  c.id === cardId ? { ...c, balance: newBalance } : c
+                )
+              );
+            }
+          }
+        }
+      } else {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      alert('Failed to update transaction. Please try again.');
+      throw error;
+    }
+  };
+
+  const handleTransactionDelete = async (transactionId) => {
+    if (!user) return;
+
+    // Get the transaction to calculate balance difference
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) {
+      alert('Transaction not found.');
+      return;
+    }
+
+    const amount = parseFloat(transaction.amount || 0);
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transactionId)
+        .eq('user_id', user.id);
+
+      if (!error) {
+        // Update transactions state
+        setTransactions((prev) => prev.filter((t) => t.id !== transactionId));
+        setBalance((prev) => prev - amount);
+
+        // Update card balance if card was associated
+        if (transaction.card_id) {
+          const card = cards.find(c => c.id === transaction.card_id);
+          if (card) {
+            const newBalance = (parseFloat(card.balance) || 0) - amount;
+            await supabase
+              .from('cards')
+              .update({ balance: newBalance })
+              .eq('id', transaction.card_id)
+              .eq('user_id', user.id);
+
+            setCards((prev) =>
+              prev.map((c) =>
+                c.id === transaction.card_id ? { ...c, balance: newBalance } : c
+              )
+            );
+          }
+        }
+      } else {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction. Please try again.');
+      throw error;
+    }
+  };
+
   const handleTransactionSubmit = async ({ title, amount, category, type, date, note, cardId }) => {
     if (!user) return;
 
@@ -798,6 +991,9 @@ export function UserProvider({ children }) {
     handleUpdateCard,
     handleDeleteCard,
     handleTransactionSubmit,
+    fetchTransactions,
+    handleTransactionUpdate,
+    handleTransactionDelete,
     handleEquipItem,
     handleLogout,
     loadUserData,
