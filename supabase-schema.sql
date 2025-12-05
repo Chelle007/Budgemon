@@ -305,6 +305,10 @@ BEGIN
   INSERT INTO public.user_settings (user_id)
   VALUES (NEW.id);
   
+  -- Create default Cash card
+  INSERT INTO public.cards (user_id, name, balance, color)
+  VALUES (NEW.id, 'Cash', 0, '#10B981');
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

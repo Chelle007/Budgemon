@@ -79,7 +79,7 @@ export default function MainAppLayout({
             />
           ))}
         {activeTab === 'dashboard' && (
-          <ManagerView balance={balance} transactions={transactions} onAddTransaction={onAddTransaction} onOpenCardManagement={onOpenCardManagement} />
+          <ManagerView user={user} onAddTransaction={onAddTransaction} onOpenCardManagement={onOpenCardManagement} />
         )}
         {activeTab === 'social' && <LeaderboardView friends={friends} />}
       </div>
