@@ -19,6 +19,7 @@ function AppContent() {
   // CompanionView state
   const [speechBubble, setSpeechBubble] = useState({ text: '', visible: false, opacity: 0 });
   const [isTalking, setIsTalking] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const speechTimeoutRef = useRef(null);
   const fadeTimeoutRef = useRef(null);
   const talkingTimeoutRef = useRef(null);
@@ -55,6 +56,7 @@ function AppContent() {
     // Track when user sends a message (we're awaiting bot response)
     if (lastMessage && lastMessage.sender === 'user' && messages.length > previousMessagesLengthRef.current) {
       awaitingBotResponseRef.current = true;
+      setIsThinking(true);
     }
     
     // Trigger animation only for bot responses to messages sent in this session
@@ -63,6 +65,7 @@ function AppContent() {
         awaitingBotResponseRef.current) {
       
       awaitingBotResponseRef.current = false;
+      setIsThinking(false);
       
       if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
@@ -544,6 +547,14 @@ function AppContent() {
               </div>
 
               <div className="flex-1 flex flex-col items-center justify-end relative px-4 pb-8">
+                {/* Thinking bubble - shows while waiting for Gemini response */}
+                {isThinking && !speechBubble.visible && (
+                  <div className="absolute bottom-[280px] z-20 px-4 py-3 rounded-2xl text-sm shadow-lg bg-white/80 text-gray-500 border border-gray-100 backdrop-blur-sm animate-pulse">
+                    Thinking...
+                  </div>
+                )}
+
+                {/* Speech bubble - shows Lumi's response */}
                 {speechBubble.visible && (
                   <div
                     className="absolute bottom-[280px] z-20 max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-lg bg-white text-gray-800 border border-gray-100 transition-opacity duration-500"
