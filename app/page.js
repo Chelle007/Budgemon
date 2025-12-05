@@ -74,6 +74,67 @@ export default function Page({ sleepMode = false } = {}) {
     }
   };
 
+  // Automatically set pet to lumi if not selected
+  const autoSelectLumi = async (userId, existingGameCurrency = null) => {
+    const initialMsg = { sender: 'bot', text: `Hi! I'm Lumi! Let's save money together! 😇` };
+    const currencyToUse = existingGameCurrency !== null ? existingGameCurrency : (gameCurrency || 160);
+    
+    try {
+      // Check if companion exists to preserve game_currency
+      const { data: existingCompanion } = await supabase
+        .from('companions')
+        .select('game_currency')
+        .eq('user_id', userId)
+        .single();
+
+      const finalCurrency = existingCompanion?.game_currency ?? currencyToUse;
+
+      // Save pet selection to database
+      const { error } = await supabase
+        .from('companions')
+        .upsert({
+          user_id: userId,
+          pet_type: 'lumi',
+          game_currency: finalCurrency,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      setPetType('lumi');
+      setGameCurrency(finalCurrency);
+
+      // Check if welcome message already exists, if not, add it
+      const { data: existingMessages } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('user_id', userId)
+        .limit(1);
+
+      if (!existingMessages || existingMessages.length === 0) {
+        // Save initial message to database only if no messages exist
+        await supabase
+          .from('chat_messages')
+          .insert({
+            user_id: userId,
+            sender: 'bot',
+            text: initialMsg.text,
+          });
+      }
+
+      // Load all messages including the welcome message
+      loadChatMessages(userId);
+      setCurrentView('main');
+    } catch (error) {
+      console.error('Error auto-selecting Lumi:', error);
+      // Still proceed with UI update even if DB save fails
+      setPetType('lumi');
+      setMessages([initialMsg]);
+      setCurrentView('main');
+    }
+  };
+
   // Load user data from Supabase
   const loadUserData = async (userId) => {
     try {
@@ -85,18 +146,21 @@ export default function Page({ sleepMode = false } = {}) {
         .single();
 
       if (companion && !companionError) {
-        setPetType(companion.pet_type);
-        setGameCurrency(companion.game_currency || 0);
+        const existingCurrency = companion.game_currency || 0;
+        setGameCurrency(existingCurrency);
         
-        // If pet is selected, go to main, otherwise onboarding
+        // If pet is selected, go to main, otherwise auto-select lumi
         if (companion.pet_type) {
+          setPetType(companion.pet_type);
           setCurrentView('main');
           loadChatMessages(userId);
         } else {
-          setCurrentView('onboarding');
+          // Auto-select lumi instead of showing onboarding
+          await autoSelectLumi(userId, existingCurrency);
         }
       } else {
-        setCurrentView('onboarding');
+        // Auto-select lumi instead of showing onboarding
+        await autoSelectLumi(userId, null);
       }
 
       // Load transactions
@@ -181,19 +245,21 @@ export default function Page({ sleepMode = false } = {}) {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (user) {
       if (petType) {
         setCurrentView('main');
       } else {
-        setCurrentView('onboarding');
+        // Auto-select lumi instead of showing onboarding
+        await autoSelectLumi(user.id);
       }
     }
   };
 
-  const handleSignupSuccess = (userData) => {
+  const handleSignupSuccess = async (userData) => {
     setUser(userData);
-    setCurrentView('onboarding');
+    // Automatically select lumi and go to main
+    await autoSelectLumi(userData.id);
   };
 
   const selectPet = async (type) => {
