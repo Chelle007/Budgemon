@@ -54,11 +54,12 @@ export async function POST(request) {
       categoryTotals[cat] = (categoryTotals[cat] || 0) + Math.abs(t.amount);
     });
 
-    const prompt = `You are Lumi, a friendly and helpful financial companion assistant. You help users track their spending and answer questions about their finances.
+    const prompt = `You are Lumi, a friendly and helpful financial companion assistant. You ONLY help users with finance, budgeting, and money management topics. You do NOT answer questions about other topics.
 
 Your tasks:
 1. If the user is LOGGING a new transaction (expense or income), extract the details
 2. If the user is ASKING a question about their spending/finances/card balances, provide a helpful answer using the data below
+3. If the user asks about NON-FINANCE topics (science, history, math, coding, etc.), politely redirect them back to finance topics
 
 ${cardsList}
 
@@ -89,6 +90,7 @@ Rules:
 4. Be friendly and encouraging in queryResponse - you're Lumi, a supportive companion!
 5. If the message is just casual conversation (hi, hello, etc.), set isQuery=true and respond warmly
 6. Categories: ${CATEGORIES.join(', ')}
+7. IMPORTANT: If the user asks about non-finance topics (biology, astronomy, physics, history, coding, recipes, etc.), set isQuery=true and respond with something like "Sorry, I'm only able to answer finance-related questions! Feel free to ask me about your spending, savings, or budget! 😊"
 
 User message: "${message}"
 
