@@ -77,86 +77,17 @@ export default function ShopView({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
-        {/* Lumi preview at the top */}
-        <div className="mb-6 flex justify-center">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="relative w-48 h-48">
-              <Image
-                src={lumiImageSrc}
-                alt="Lumi"
-                fill
-                className="object-contain"
-                priority
-              />
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24 flex items-center justify-center">
+        {/* Work in Progress Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 max-w-md w-full text-center">
+          <div className="mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+              <BadgeDollarSign size={32} className="text-yellow-600" />
             </div>
           </div>
-        </div>
-
-        {/* Wardrobe items grid */}
-        <div className="grid grid-cols-2 gap-4">
-          {wardrobeItems.map((item) => {
-            const isOwned = inventory.includes(item.id);
-            // Check if this item is currently equipped
-            let isEquipped = false;
-            if (equipped) {
-              if (item.id === 'hat' && equipped.head && (equipped.head === 'hat' || equipped.head === '🧢' || equipped.head === 'Beige Hat')) {
-                isEquipped = true;
-              } else if (item.id === 'ribbon' && equipped.head && (equipped.head === 'ribbon' || equipped.head === '🎀')) {
-                isEquipped = true;
-              } else if (item.id === 'mustache' && equipped.face && (equipped.face === 'mustache' || equipped.face === 'Mustache')) {
-                isEquipped = true;
-              } else if (item.id === 'sunglasses' && equipped.eyes && (equipped.eyes === 'sunglasses' || equipped.eyes === '🕶️' || equipped.eyes === 'Sunglasses')) {
-                isEquipped = true;
-              }
-            }
-
-            return (
-              <div
-                key={item.id}
-                className={`bg-white rounded-2xl p-4 shadow-sm border flex flex-col items-center gap-2 hover:shadow-md transition ${
-                  isEquipped ? 'border-green-500 border-2' : 'border-gray-100'
-                }`}
-              >
-                <div className="w-20 h-20 relative mb-2">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <h4 className="font-bold text-gray-800">{item.name}</h4>
-                {isOwned ? (
-                  <button
-                    onClick={() => {
-                      if (isEquipped) {
-                        // Unequip by setting the category to null
-                        onEquipItem({ id: item.id, name: item.name, category: item.category, icon: null });
-                      } else {
-                        // Equip the item
-                        onEquipItem({ id: item.id, name: item.name, category: item.category, icon: item.id });
-                      }
-                    }}
-                    className={`w-full py-2 rounded-xl text-sm font-bold ${
-                      isEquipped
-                        ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                        : 'bg-green-500 text-white hover:bg-green-600'
-                    }`}
-                  >
-                    {isEquipped ? 'Unequip' : 'Equip'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onBuyItem({ id: item.id, name: item.name, price: item.price, category: item.category, icon: item.id })}
-                    className="w-full py-2 bg-yellow-500 text-white rounded-xl text-sm font-bold shadow-yellow-200 hover:bg-yellow-600"
-                  >
-                    Buy ${item.price}
-                  </button>
-                )}
-              </div>
-            );
-          })}
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Stay Tuned!</h2>
+          <p className="text-gray-600 mb-4">The shop is currently under construction.</p>
+          <p className="text-sm text-gray-500">We're working hard to bring you amazing items soon!</p>
         </div>
       </div>
     </div>
