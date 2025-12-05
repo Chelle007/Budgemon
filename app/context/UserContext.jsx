@@ -376,7 +376,7 @@ export function UserProvider({ children }) {
       const geminiData = await response.json();
 
       // If Gemini detected a transaction, save it
-      if (geminiData.isTransaction && geminiData.type && geminiData.amount) {
+      if (geminiData.isTransaction && geminiData.type && geminiData.amount !== null && geminiData.amount !== undefined) {
         // Find card ID if card name was mentioned
         let cardId = null;
         if (geminiData.card) {

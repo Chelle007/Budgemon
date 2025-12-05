@@ -85,7 +85,7 @@ Return ONLY the JSON object, no other text.`;
       isTransaction: parsedResponse.isTransaction === true,
       type: parsedResponse.type === 'expense' || parsedResponse.type === 'income' ? parsedResponse.type : null,
       title: parsedResponse.title || 'New Transaction',
-      amount: parsedResponse.amount && typeof parsedResponse.amount === 'number' ? parsedResponse.amount : null,
+      amount: typeof parsedResponse.amount === 'number' && parsedResponse.amount !== null ? parsedResponse.amount : null,
       category: parsedResponse.category && CATEGORIES.includes(parsedResponse.category) ? parsedResponse.category : 'General',
       card: parsedResponse.card || null,
     };

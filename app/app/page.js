@@ -837,102 +837,119 @@ function AppContent() {
           )}
           
           {activeTab === 'social' && (
-            <div className="flex flex-col h-full bg-slate-50 px-4 pt-6 pb-24 overflow-y-auto">
-              <h2 className="text-center font-bold text-2xl text-slate-800 mb-6 flex items-center justify-center gap-2">
-                <Trophy className="w-6 h-6 text-yellow-500" /> Leaderboard
-              </h2>
+            <div className="flex flex-col h-full bg-slate-50 px-4 pt-6 pb-24 overflow-y-auto relative">
+              {/* Original leaderboard content with reduced opacity */}
+              <div className="opacity-30 pointer-events-none">
+                <h2 className="text-center font-bold text-2xl text-slate-800 mb-6 flex items-center justify-center gap-2">
+                  <Trophy className="w-6 h-6 text-yellow-500" /> Leaderboard
+                </h2>
 
-              <div className="flex items-end justify-center gap-2 mb-10 mt-4">
-                <div className="flex flex-col items-center w-1/3">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-slate-200 shadow-md overflow-hidden bg-white">
-                      <img src={getAvatar(second)} alt={second?.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white shadow-sm flex items-center gap-1">
-                      <Medal size={10} /> 2nd
-                    </div>
-                  </div>
-                  <p className="font-bold text-sm text-slate-700 mt-4 line-clamp-1">{second?.name}</p>
-                  <div className="flex items-center text-xs text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full mt-1">
-                    <BadgeDollarSign size={10} /> {second?.balance.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center w-1/3 z-10 -mb-2">
-                  <div className="relative">
-                    <Crown className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm animate-bounce-slow" size={32} fill="currentColor" />
-                    <div className="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-xl overflow-hidden bg-white ring-4 ring-yellow-100">
-                      <img src={getAvatar(first)} alt={first?.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-white text-xs font-bold px-3 py-1 rounded-full border-2 border-white shadow-sm">
-                      1st
-                    </div>
-                  </div>
-                  <p className="font-bold text-base text-slate-800 mt-5">{first?.name}</p>
-                  <div className="flex items-center text-sm text-yellow-700 font-bold bg-yellow-50 px-3 py-1 rounded-full mt-1 border border-yellow-100">
-                    <BadgeDollarSign size={12} /> {first?.balance.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center w-1/3">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-orange-200 shadow-md overflow-hidden bg-white">
-                      <img src={getAvatar(third)} alt={third?.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-orange-200 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white shadow-sm flex items-center gap-1">
-                      <Medal size={10} /> 3rd
-                    </div>
-                  </div>
-                  <p className="font-bold text-sm text-slate-700 mt-4 line-clamp-1">{third?.name}</p>
-                  <div className="flex items-center text-xs text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full mt-1">
-                    <BadgeDollarSign size={10} /> {third?.balance.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">All Friends</h3>
-                {FRIENDS_LEADERBOARD.map((friend) => (
-                  <div
-                    key={friend.id}
-                    className={`p-4 rounded-2xl flex items-center gap-4 transition-all duration-200 ${
-                      friend.isUser 
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-md scale-[1.02]' 
-                        : 'bg-white border border-slate-100 shadow-sm hover:shadow-md'
-                    }`}
-                  >
-                    <div className={`font-bold w-6 text-center text-sm ${
-                      friend.rank <= 3 ? 'text-yellow-500' : 'text-slate-400'
-                    }`}>
-                      #{friend.rank}
-                    </div>
-                    <div className="w-12 h-12 bg-slate-50 rounded-full flex-shrink-0 border border-slate-100 overflow-hidden">
-                      <img src={getAvatar(friend)} alt={friend.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className={`font-bold truncate ${friend.isUser ? 'text-green-800' : 'text-slate-800'}`}>
-                          {friend.name}
-                        </h4>
-                        {friend.isUser && (
-                          <span className="text-[10px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded font-bold">YOU</span>
-                        )}
+                <div className="flex items-end justify-center gap-2 mb-10 mt-4">
+                  <div className="flex flex-col items-center w-1/3">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full border-4 border-slate-200 shadow-md overflow-hidden bg-white">
+                        <img src={getAvatar(second)} alt={second?.name} className="w-full h-full object-cover" />
                       </div>
-                      <p className="text-xs text-slate-500 truncate leading-tight mt-0.5">
-                        {friend.status}
-                      </p>
+                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white shadow-sm flex items-center gap-1">
+                        <Medal size={10} /> 2nd
+                      </div>
                     </div>
-                    <div className={`font-bold flex items-center gap-0.5 ${friend.isUser ? 'text-green-700' : 'text-slate-600'}`}>
-                      <BadgeDollarSign size={14} strokeWidth={2.5} />
-                      {friend.balance.toLocaleString()}
+                    <p className="font-bold text-sm text-slate-700 mt-4 line-clamp-1">{second?.name}</p>
+                    <div className="flex items-center text-xs text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full mt-1">
+                      <BadgeDollarSign size={10} /> {second?.balance.toLocaleString()}
                     </div>
                   </div>
-                ))}
+
+                  <div className="flex flex-col items-center w-1/3 z-10 -mb-2">
+                    <div className="relative">
+                      <Crown className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm animate-bounce-slow" size={32} fill="currentColor" />
+                      <div className="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-xl overflow-hidden bg-white ring-4 ring-yellow-100">
+                        <img src={getAvatar(first)} alt={first?.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-white text-xs font-bold px-3 py-1 rounded-full border-2 border-white shadow-sm">
+                        1st
+                      </div>
+                    </div>
+                    <p className="font-bold text-base text-slate-800 mt-5">{first?.name}</p>
+                    <div className="flex items-center text-sm text-yellow-700 font-bold bg-yellow-50 px-3 py-1 rounded-full mt-1 border border-yellow-100">
+                      <BadgeDollarSign size={12} /> {first?.balance.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center w-1/3">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full border-4 border-orange-200 shadow-md overflow-hidden bg-white">
+                        <img src={getAvatar(third)} alt={third?.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-orange-200 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white shadow-sm flex items-center gap-1">
+                        <Medal size={10} /> 3rd
+                      </div>
+                    </div>
+                    <p className="font-bold text-sm text-slate-700 mt-4 line-clamp-1">{third?.name}</p>
+                    <div className="flex items-center text-xs text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full mt-1">
+                      <BadgeDollarSign size={10} /> {third?.balance.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">All Friends</h3>
+                  {FRIENDS_LEADERBOARD.map((friend) => (
+                    <div
+                      key={friend.id}
+                      className={`p-4 rounded-2xl flex items-center gap-4 transition-all duration-200 ${
+                        friend.isUser 
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-md scale-[1.02]' 
+                          : 'bg-white border border-slate-100 shadow-sm hover:shadow-md'
+                      }`}
+                    >
+                      <div className={`font-bold w-6 text-center text-sm ${
+                        friend.rank <= 3 ? 'text-yellow-500' : 'text-slate-400'
+                      }`}>
+                        #{friend.rank}
+                      </div>
+                      <div className="w-12 h-12 bg-slate-50 rounded-full flex-shrink-0 border border-slate-100 overflow-hidden">
+                        <img src={getAvatar(friend)} alt={friend.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className={`font-bold truncate ${friend.isUser ? 'text-green-800' : 'text-slate-800'}`}>
+                            {friend.name}
+                          </h4>
+                          {friend.isUser && (
+                            <span className="text-[10px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded font-bold">YOU</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate leading-tight mt-0.5">
+                          {friend.status}
+                        </p>
+                      </div>
+                      <div className={`font-bold flex items-center gap-0.5 ${friend.isUser ? 'text-green-700' : 'text-slate-600'}`}>
+                        <BadgeDollarSign size={14} strokeWidth={2.5} />
+                        {friend.balance.toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="w-full mt-6 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-500 transition-colors">
+                  <Plus size={20} /> Add More Friends
+                </button>
               </div>
 
-              <button className="w-full mt-6 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-500 transition-colors">
-                <Plus size={20} /> Add More Friends
-              </button>
+              {/* Overlay "Stay Tuned!" message */}
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 max-w-md w-full mx-4 text-center">
+                  <div className="mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+                      <Trophy size={32} className="text-yellow-600" />
+                    </div>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Stay Tuned!</h2>
+                  <p className="text-gray-600 mb-4">The leaderboard is currently under construction.</p>
+                  <p className="text-sm text-gray-500">We're working hard to bring you amazing features soon!</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
