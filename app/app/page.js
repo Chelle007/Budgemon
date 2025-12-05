@@ -456,6 +456,59 @@ function AppContent() {
     handleSendMessage(text);
   };
 
+  // Calculate the 3 most frequently logged transactions
+  const getMostFrequentTransactions = () => {
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
+
+    // Group transactions by title + amount (for expenses, use absolute value)
+    const transactionCounts = {};
+    
+    transactions.forEach((t) => {
+      const title = (t.title || '').trim();
+      const amount = Math.abs(parseFloat(t.amount || 0));
+      
+      // Skip if title is empty or amount is invalid
+      if (!title || isNaN(amount) || amount === 0) {
+        return;
+      }
+      
+      // Create a key combining title and amount (round to 2 decimals for grouping)
+      const key = `${title.toLowerCase()}_${amount.toFixed(2)}`;
+      
+      if (!transactionCounts[key]) {
+        transactionCounts[key] = {
+          title: title,
+          amount: amount,
+          count: 0,
+        };
+      }
+      transactionCounts[key].count += 1;
+    });
+
+    // Sort by count (most frequent first) and get top 3
+    const sorted = Object.values(transactionCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+
+    return sorted.map((item) => {
+      // Format amount: show as integer if whole number, otherwise show 2 decimals
+      const formattedAmount = item.amount % 1 === 0 
+        ? item.amount.toFixed(0) 
+        : item.amount.toFixed(2);
+      
+      return {
+        title: item.title,
+        amount: item.amount,
+        displayText: `${item.title} $${formattedAmount}`,
+        presetText: `${item.title} $${formattedAmount}`,
+      };
+    });
+  };
+
+  const frequentTransactions = getMostFrequentTransactions();
+
   const getMonthName = () => {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -591,24 +644,39 @@ function AppContent() {
 
               <div className="px-4 mb-2">
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  <button
-                    onClick={() => presetMessage('Bought Coffee $6')}
-                    className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
-                  >
-                    ☕ Coffee $6
-                  </button>
-                  <button
-                    onClick={() => presetMessage('Transport $2')}
-                    className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
-                  >
-                    🚆 Train $2
-                  </button>
-                  <button
-                    onClick={() => presetMessage('Lunch $12')}
-                    className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
-                  >
-                    🍜 Lunch $12
-                  </button>
+                  {frequentTransactions.length > 0 ? (
+                    frequentTransactions.map((item, index) => (
+                      <button
+                        key={`${item.title}-${item.amount}-${index}`}
+                        onClick={() => presetMessage(item.presetText)}
+                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                      >
+                        {item.displayText}
+                      </button>
+                    ))
+                  ) : (
+                    // Fallback to default buttons if no transactions yet
+                    <>
+                      <button
+                        onClick={() => presetMessage('Bought Coffee $6')}
+                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                      >
+                        ☕ Coffee $6
+                      </button>
+                      <button
+                        onClick={() => presetMessage('Transport $2')}
+                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                      >
+                        🚆 Train $2
+                      </button>
+                      <button
+                        onClick={() => presetMessage('Lunch $12')}
+                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                      >
+                        🍜 Lunch $12
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
