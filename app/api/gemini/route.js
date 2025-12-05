@@ -80,16 +80,30 @@ Return ONLY the JSON object, no other text.`;
       }
     }
 
+    console.log('Gemini parsed response:', JSON.stringify(parsedResponse, null, 2));
+
     // Validate and normalize the response
+    // Parse amount - handle both number and string responses from Gemini
+    let parsedAmount = null;
+    if (parsedResponse.amount !== null && parsedResponse.amount !== undefined) {
+      const numAmount = typeof parsedResponse.amount === 'number' 
+        ? parsedResponse.amount 
+        : parseFloat(parsedResponse.amount);
+      if (!isNaN(numAmount)) {
+        parsedAmount = numAmount;
+      }
+    }
+
     const normalized = {
-      isTransaction: parsedResponse.isTransaction === true,
+      isTransaction: parsedResponse.isTransaction === true || parsedResponse.isTransaction === 'true',
       type: parsedResponse.type === 'expense' || parsedResponse.type === 'income' ? parsedResponse.type : null,
       title: parsedResponse.title || 'New Transaction',
-      amount: typeof parsedResponse.amount === 'number' && parsedResponse.amount !== null ? parsedResponse.amount : null,
+      amount: parsedAmount,
       category: parsedResponse.category && CATEGORIES.includes(parsedResponse.category) ? parsedResponse.category : 'General',
       card: parsedResponse.card || null,
     };
 
+    console.log('Normalized response:', JSON.stringify(normalized, null, 2));
     return NextResponse.json(normalized);
   } catch (error) {
     console.error('Error calling Gemini API:', error);

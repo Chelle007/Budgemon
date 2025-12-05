@@ -134,25 +134,21 @@ function AppContent() {
   }, [user, activeTab, cards]);
 
   // Update manager balance and transactions when UserContext cards or transactions change
-  // This runs whenever cards change, ensuring balance is always up-to-date
+  // This runs whenever cards or transactions change, ensuring data is always up-to-date
   useEffect(() => {
+    console.log('Syncing transactions to manager, count:', transactions.length, transactions);
+    
     // Always calculate total balance from all cards (like cards page)
-    // This ensures we always show the sum of card balances, not transaction-based balance
     const totalCardBalance = cards.reduce((sum, card) => {
       const cardBalance = parseFloat(card.balance) || 0;
       return sum + (isNaN(cardBalance) ? 0 : cardBalance);
     }, 0);
     
-    // Only update if we're on dashboard tab
-    if (activeTab === 'dashboard') {
-      setManagerBalance(totalCardBalance);
-      
-      // Also update managerTransactions to keep them in sync for immediate updates
-      if (transactions.length > 0) {
-        setManagerTransactions(transactions);
-      }
-    }
-  }, [cards, transactions, activeTab]);
+    // Always keep managerTransactions and balance in sync with context
+    // This ensures new transactions are shown immediately when switching to dashboard
+    setManagerTransactions(transactions);
+    setManagerBalance(totalCardBalance);
+  }, [cards, transactions]);
 
   // Also recalculate spending breakdown and calendar when transactions change
   // This ensures calendar is always synced with database transactions
@@ -283,10 +279,8 @@ function AppContent() {
       if (transactionsError) throw transactionsError;
 
       const safeTransactionsData = transactionsData || [];
-      setManagerTransactions(safeTransactionsData);
-      
-      // Also update transactions in UserContext if they're out of sync
-      // This ensures the calendar gets the latest data from database
+      // Don't set managerTransactions here - let the sync useEffect handle it
+      // This prevents race conditions where database fetch overwrites newer context data
 
       const currentMonthTransactions = safeTransactionsData.filter((t) => {
         if (!t.date) return false;

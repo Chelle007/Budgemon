@@ -374,9 +374,11 @@ export function UserProvider({ children }) {
       }
 
       const geminiData = await response.json();
+      console.log('Gemini data received:', geminiData);
 
       // If Gemini detected a transaction, save it
       if (geminiData.isTransaction && geminiData.type && geminiData.amount !== null && geminiData.amount !== undefined) {
+        console.log('Transaction detected, saving...');
         // Find card ID if card name was mentioned
         let cardId = null;
         if (geminiData.card) {
@@ -394,6 +396,15 @@ export function UserProvider({ children }) {
             : -Math.abs(geminiData.amount);
 
         try {
+          console.log('Inserting transaction:', {
+            user_id: user.id,
+            title: geminiData.title,
+            amount: signedAmount,
+            category: geminiData.category || 'General',
+            type: geminiData.type,
+            card_id: cardId,
+          });
+          
           const { data, error } = await supabase
             .from('transactions')
             .insert({
@@ -408,7 +419,10 @@ export function UserProvider({ children }) {
             .select()
             .single();
 
+          console.log('Supabase response - data:', data, 'error:', error);
+
           if (!error && data) {
+            console.log('Transaction saved successfully:', data);
             setTransactions((prev) => [data, ...prev]);
             setBalance((prev) => prev + signedAmount);
 
