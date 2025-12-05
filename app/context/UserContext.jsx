@@ -358,6 +358,8 @@ export function UserProvider({ children }) {
 
     // Use Gemini to parse the message
     try {
+      // Get recent conversation history (last 10 messages for context)
+      const recentMessages = messages.slice(-10);
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: {
@@ -367,6 +369,8 @@ export function UserProvider({ children }) {
           message: content,
           cards: cards,
           transactions: transactions,
+          conversationHistory: recentMessages,
+          petType: petType,
         }),
       });
 
@@ -380,7 +384,7 @@ export function UserProvider({ children }) {
       // If Gemini detected a transaction, save it
       if (geminiData.isTransaction && geminiData.type && geminiData.amount !== null && geminiData.amount !== undefined) {
         console.log('Transaction detected, saving...');
-        // Find card ID if card name was mentioned, default to Cash if not specified
+        // Find card ID if card name was mentioned
         let cardId = null;
         if (geminiData.card) {
           const matchedCard = cards.find(
@@ -391,91 +395,84 @@ export function UserProvider({ children }) {
           }
         }
         
-        // Default to Cash card if no card specified or not found
+        // If no card specified, treat as query asking for clarification
         if (!cardId) {
-          const cashCard = cards.find((c) => c.name.toLowerCase() === 'cash');
-          if (cashCard) {
-            cardId = cashCard.id;
-          }
-        }
+          console.log('No card specified, treating as query for clarification');
+          botResponse = geminiData.queryResponse || 
+            (petType === 'lumi'
+              ? "I'd be happy to record that transaction! Which card would you like to use? Please let me know! 😊"
+              : "Which card? I need to know which account to use. 💅");
+        } else {
+          const signedAmount =
+            geminiData.type === 'income'
+              ? Math.abs(geminiData.amount)
+              : -Math.abs(geminiData.amount);
 
-        const signedAmount =
-          geminiData.type === 'income'
-            ? Math.abs(geminiData.amount)
-            : -Math.abs(geminiData.amount);
-
-        try {
-          console.log('Inserting transaction:', {
-            user_id: user.id,
-            title: geminiData.title,
-            amount: signedAmount,
-            category: geminiData.category || 'General',
-            type: geminiData.type,
-            card_id: cardId,
-          });
-          
-          const { data, error } = await supabase
-            .from('transactions')
-            .insert({
+          try {
+            console.log('Inserting transaction:', {
               user_id: user.id,
               title: geminiData.title,
               amount: signedAmount,
               category: geminiData.category || 'General',
               type: geminiData.type,
-              date: new Date().toISOString().split('T')[0],
               card_id: cardId,
-            })
-            .select()
-            .single();
+            });
+            
+            const { data, error } = await supabase
+              .from('transactions')
+              .insert({
+                user_id: user.id,
+                title: geminiData.title,
+                amount: signedAmount,
+                category: geminiData.category || 'General',
+                type: geminiData.type,
+                date: new Date().toISOString().split('T')[0],
+                card_id: cardId,
+              })
+              .select()
+              .single();
 
-          console.log('Supabase response - data:', data, 'error:', error);
+            console.log('Supabase response - data:', data, 'error:', error);
 
-          if (!error && data) {
-            console.log('Transaction saved successfully:', data);
-            setTransactions((prev) => [data, ...prev]);
-            setBalance((prev) => prev + signedAmount);
+            if (!error && data) {
+              console.log('Transaction saved successfully:', data);
+              setTransactions((prev) => [data, ...prev]);
+              setBalance((prev) => prev + signedAmount);
 
-            // Update card balance if card was specified
-            if (cardId) {
-              const card = cards.find((c) => c.id === cardId);
-              if (card) {
-                const newBalance = (parseFloat(card.balance) || 0) + signedAmount;
-                await supabase
-                  .from('cards')
-                  .update({ balance: newBalance })
-                  .eq('id', cardId)
-                  .eq('user_id', user.id);
+              // Update card balance if card was specified
+              if (cardId) {
+                const card = cards.find((c) => c.id === cardId);
+                if (card) {
+                  const newBalance = (parseFloat(card.balance) || 0) + signedAmount;
+                  await supabase
+                    .from('cards')
+                    .update({ balance: newBalance })
+                    .eq('id', cardId)
+                    .eq('user_id', user.id);
 
-                setCards((prev) =>
-                  prev.map((c) =>
-                    c.id === cardId ? { ...c, balance: newBalance } : c
-                  )
-                );
+                  setCards((prev) =>
+                    prev.map((c) =>
+                      c.id === cardId ? { ...c, balance: newBalance } : c
+                    )
+                  );
+                }
               }
-            }
 
-            // Generate bot response based on transaction type
-            const amountStr = Math.abs(geminiData.amount).toFixed(2);
-            if (geminiData.type === 'income') {
-              botResponse =
-                petType === 'lumi'
-                  ? `Great! I've recorded your income of $${amountStr}. Keep it up! 💰✨`
-                  : `$${amountStr} income recorded. Don't waste it all now. 💸`;
+              // Use Gemini's generated response for the transaction
+              botResponse = geminiData.transactionResponse || 
+                (petType === 'lumi'
+                  ? `Great! I've recorded that transaction! 💰✨`
+                  : `Transaction recorded. 💸`);
             } else {
-              botResponse =
-                petType === 'lumi'
-                  ? `Okay! I've recorded $${amountStr} for ${geminiData.title}. Remember, every penny counts! You're doing great! 🌟`
-                  : `$${amountStr}?! Seriously? Do you think money grows on trees? 😤`;
+              throw error;
             }
-          } else {
-            throw error;
+          } catch (error) {
+            console.error('Error saving transaction:', error);
+            botResponse =
+              petType === 'lumi'
+                ? "Oops! I had trouble saving that transaction. Could you try again? 😅"
+                : "I couldn't save that. Try again, and make sure you give me all the details. 💅";
           }
-        } catch (error) {
-          console.error('Error saving transaction:', error);
-          botResponse =
-            petType === 'lumi'
-              ? "Oops! I had trouble saving that transaction. Could you try again? 😅"
-              : "I couldn't save that. Try again, and make sure you give me all the details. 💅";
         }
       } else if (geminiData.isQuery && geminiData.queryResponse) {
         // User asked a question about their finances - use Gemini's response

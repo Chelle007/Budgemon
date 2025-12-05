@@ -7,7 +7,7 @@ const CATEGORIES = ['Food', 'Shopping', 'Transport', 'Bills', 'Entertainment', '
 
 export async function POST(request) {
   try {
-    const { message, cards = [], transactions = [] } = await request.json();
+    const { message, cards = [], transactions = [], conversationHistory = [], petType = 'lumi' } = await request.json();
 
     if (!message || !message.trim()) {
       return NextResponse.json(
@@ -54,7 +54,21 @@ export async function POST(request) {
       categoryTotals[cat] = (categoryTotals[cat] || 0) + Math.abs(t.amount);
     });
 
-    const prompt = `You are Lumi, a friendly and helpful financial companion assistant. You ONLY help users with finance, budgeting, and money management topics. You do NOT answer questions about other topics.
+    // Build conversation history context (last 10 messages for context)
+    const recentMessages = conversationHistory.slice(-10);
+    const conversationContext = recentMessages.length > 0
+      ? `Recent conversation history:\n${recentMessages.map(m => 
+          `${m.sender === 'user' ? 'User' : 'Lumi'}: ${m.text}`
+        ).join('\n')}\n`
+      : '';
+
+    const petPersonality = petType === 'luna' 
+      ? 'You are Luna, a sassy and no-nonsense financial companion. You are direct, sometimes sarcastic, but ultimately care about the user\'s financial well-being. You use emojis sparingly and have a more serious tone.'
+      : 'You are Lumi, a friendly and supportive financial companion. You are encouraging, positive, and use emojis frequently. You\'re always cheering the user on and being helpful.';
+
+    const prompt = `${petPersonality} You ONLY help users with finance, budgeting, and money management topics. You do NOT answer questions about other topics.
+
+${conversationContext}
 
 Your tasks:
 1. If the user is LOGGING a new transaction (expense or income), extract the details
@@ -80,17 +94,29 @@ Return ONLY a valid JSON object with this structure:
   "amount": number | null,  // for new transactions: the amount
   "category": string | null,  // One of: ${CATEGORIES.join(', ')}
   "card": string | null,  // card name if mentioned
-  "queryResponse": string | null  // for queries: your friendly, helpful response about their finances
+  "queryResponse": string | null,  // for queries: your friendly, helpful response about their finances
+  "transactionResponse": string | null  // for successful transactions: your friendly, personalized response confirming the transaction was saved. Match your personality (${petType === 'luna' ? 'sassy and direct' : 'friendly and encouraging'}). Keep it concise - 1-2 sentences max!
 }
 
 Rules:
-1. For NEW transactions: set isTransaction=true, extract title/amount/category/type
+1. For NEW transactions: set isTransaction=true, extract title/amount/category/type, and provide a personalized transactionResponse that confirms the transaction was recorded. Match your personality: ${petType === 'luna' ? 'Be sassy and direct, use fewer emojis' : 'Be friendly and encouraging, use emojis frequently'}. CRITICAL: transactionResponse MUST be 1-2 sentences max - keep it concise and to the point!
 2. For QUESTIONS about finances (e.g., "how much did I spend on food?", "what was my last purchase?"): set isQuery=true, provide queryResponse
 3. If asking about spending, calculate from the transaction history provided
 4. Be friendly and encouraging in queryResponse - you're Lumi, a supportive companion!
 5. If the message is just casual conversation (hi, hello, etc.), set isQuery=true and respond warmly
 6. Categories: ${CATEGORIES.join(', ')}
 7. IMPORTANT: If the user asks about non-finance topics (biology, astronomy, physics, history, coding, recipes, etc.), set isQuery=true and respond with something like "Sorry, I'm only able to answer finance-related questions! Feel free to ask me about your spending, savings, or budget! 😊"
+8. CRITICAL - Card requirement: When the user is logging a NEW transaction, you MUST check if they EXPLICITLY mentioned which card/account to use. 
+   - The "card" field should ONLY be set to a card name if the user EXPLICITLY mentioned it in their message (e.g., "coffee $5 on Visa", "bought groceries with my Chase card", "spent $20 using my Cash card")
+   - DO NOT infer, assume, or default to any card (including "cash", "Cash", or any other card name)
+   - Examples of what NOT to do:
+     * User says "coffee $5" → DO NOT set card="Cash" or card="cash" → Instead: set isTransaction=false, isQuery=true, card=null, ask which card
+     * User says "bought groceries $50" → DO NOT infer any card → Instead: set isTransaction=false, isQuery=true, card=null, ask which card
+     * User says "salary $1000" → DO NOT assume cash → Instead: set isTransaction=false, isQuery=true, card=null, ask which card
+   - If they DID explicitly specify a card: set isTransaction=true, extract all details including the card name (must match one from the cards list)
+   - If they did NOT explicitly specify a card: set isTransaction=false, isQuery=true, and card=null. Provide a friendly queryResponse asking them which card they want to use. List the available cards from the cards list above. Example: "I'd be happy to record that transaction! Which card would you like to use? You have: [list cards]. Please let me know! 😊"
+   - NEVER set card to "cash", "Cash", or any other value unless the user explicitly mentioned that exact card name in their message
+9. Remember the conversation context - if the user is responding to a previous question you asked (like which card to use), use that context to understand their response. If they're providing a card name in response to your question, extract it and set isTransaction=true with the card specified
 
 User message: "${message}"
 
@@ -129,6 +155,32 @@ Return ONLY the JSON object, no other text.`;
       }
     }
 
+    // Validate card - only accept if it matches an actual card name AND was explicitly mentioned
+    let validatedCard = null;
+    if (parsedResponse.card) {
+      const cardName = parsedResponse.card.trim();
+      const matchedCard = cards.find(c => c.name.toLowerCase() === cardName.toLowerCase());
+      if (matchedCard) {
+        // Additional check: if card is "Cash" (case-insensitive), verify user mentioned it
+        const messageLower = message.toLowerCase();
+        const cardNameLower = cardName.toLowerCase();
+        const cashVariants = ['cash', 'cash card', 'using cash', 'with cash', 'on cash'];
+        const hasCashMention = cashVariants.some(variant => messageLower.includes(variant));
+        
+        // If it's a cash card but user didn't mention cash, reject it (it was inferred)
+        if (cardNameLower === 'cash' && !hasCashMention) {
+          console.log(`Card "Cash" was inferred but not mentioned by user - rejecting`);
+          validatedCard = null;
+        } else {
+          validatedCard = matchedCard.name;
+        }
+      } else {
+        // Card was specified but doesn't match - treat as missing card
+        console.log(`Card "${cardName}" specified but doesn't match any available cards`);
+        validatedCard = null;
+      }
+    }
+
     const normalized = {
       isTransaction: parsedResponse.isTransaction === true || parsedResponse.isTransaction === 'true',
       isQuery: parsedResponse.isQuery === true || parsedResponse.isQuery === 'true',
@@ -136,9 +188,21 @@ Return ONLY the JSON object, no other text.`;
       title: parsedResponse.title || 'New Transaction',
       amount: parsedAmount,
       category: parsedResponse.category && CATEGORIES.includes(parsedResponse.category) ? parsedResponse.category : 'General',
-      card: parsedResponse.card || null,
+      card: validatedCard,
       queryResponse: parsedResponse.queryResponse || null,
+      transactionResponse: parsedResponse.transactionResponse || null,
     };
+
+    // If transaction is detected but card is missing or invalid, force it to be a query
+    if (normalized.isTransaction && !normalized.card && normalized.amount !== null) {
+      console.log('Transaction detected but card missing - converting to query');
+      normalized.isTransaction = false;
+      normalized.isQuery = true;
+      if (!normalized.queryResponse) {
+        const cardNames = cards.map(c => c.name).join(', ');
+        normalized.queryResponse = `I'd be happy to record that transaction! Which card would you like to use? You have: ${cardNames}. Please let me know! 😊`;
+      }
+    }
 
     console.log('Normalized response:', JSON.stringify(normalized, null, 2));
     return NextResponse.json(normalized);
