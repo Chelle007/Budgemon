@@ -11,7 +11,7 @@ import { useUser } from '../context/UserContext';
 function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, petType, gameCurrency, equipped, balance, transactions, messages, handleSendMessage, cards, handleTransactionDelete, fetchTransactions } = useUser();
+  const { user, loading, petType, gameCurrency, equipped, balance, transactions, messages, handleSendMessage, cards, handleTransactionDelete, fetchTransactions, darkMode } = useUser();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'companion');
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef(null);
@@ -428,7 +428,14 @@ function AppContent() {
     }
   };
 
+  const isDark = darkMode || false;
+
   const getThemeColors = () => {
+    if (isDark) {
+      if (petType === 'lumi') return 'from-gray-900 to-gray-800 text-white';
+      if (petType === 'luna') return 'from-gray-900 to-gray-800 text-white';
+      return 'from-gray-900 to-gray-800 text-white';
+    }
     if (petType === 'lumi') return 'from-blue-100 to-cyan-50 text-blue-800';
     if (petType === 'luna') return 'from-purple-100 to-fuchsia-50 text-purple-900';
     return 'from-gray-100 to-gray-50 text-gray-800';
@@ -574,10 +581,10 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 flex items-center justify-center">
+      <div className={`font-sans max-w-md mx-auto h-screen flex items-center justify-center ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className={isDark ? 'text-white' : 'text-gray-600'}>Loading...</p>
         </div>
       </div>
     );
@@ -588,29 +595,29 @@ function AppContent() {
   }
 
   return (
-    <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 shadow-2xl overflow-hidden relative">
+    <div className={`font-sans max-w-md mx-auto h-screen shadow-2xl overflow-hidden relative ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
       <div className={`h-screen flex flex-col bg-gradient-to-b ${getThemeColors()} relative overflow-hidden`}>
         <div className="flex-1 relative overflow-hidden">
           {activeTab === 'companion' && (
             <div className="flex flex-col h-full">
-              <div className="px-6 py-4 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-                <h2 className={`text-lg font-bold ${petType === 'lumi' ? 'text-cyan-800' : 'text-purple-800'}`}>
+              <div className={`px-6 py-4 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 ${isDark ? 'bg-gray-900/50' : 'bg-white/50'}`}>
+                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : (petType === 'lumi' ? 'text-cyan-800' : 'text-purple-800')}`}>
                   {petName}
                 </h2>
                 <div className="flex items-center gap-3">
                   <div
                     onClick={() => router.push('/shop')}
-                    className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 cursor-pointer hover:bg-yellow-200"
+                    className={`flex items-center gap-1 px-3 py-1 rounded-full border cursor-pointer ${isDark ? 'bg-yellow-900 border-yellow-800 hover:bg-yellow-800' : 'bg-yellow-100 border-yellow-200 hover:bg-yellow-200'}`}
                   >
-                    <BadgeDollarSign size={18} className="text-yellow-800" />
-                    <span className="font-bold text-yellow-800">{gameCurrency}</span>
+                    <BadgeDollarSign size={18} className={isDark ? 'text-yellow-200' : 'text-yellow-800'} />
+                    <span className={`font-bold ${isDark ? 'text-yellow-200' : 'text-yellow-800'}`}>{gameCurrency}</span>
                   </div>
                   <button
                     onClick={() => router.push('/profile')}
-                    className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition"
+                    className={`p-2 rounded-full border transition ${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'}`}
                     aria-label="Profile"
                   >
-                    <User size={20} className="text-gray-700" />
+                    <User size={20} className={isDark ? 'text-white' : 'text-gray-700'} />
                   </button>
                 </div>
               </div>
@@ -618,7 +625,7 @@ function AppContent() {
               <div className="flex-1 flex flex-col items-center justify-end relative px-4 pb-8">
                 {/* Thinking bubble - shows while waiting for Gemini response */}
                 {isThinking && !speechBubble.visible && (
-                  <div className="absolute bottom-[280px] z-20 px-4 py-3 rounded-2xl text-sm shadow-lg bg-white/80 text-gray-500 border border-gray-100 backdrop-blur-sm animate-pulse">
+                  <div className={`absolute bottom-[280px] z-20 px-4 py-3 rounded-2xl text-sm shadow-lg backdrop-blur-sm animate-pulse border ${isDark ? 'bg-gray-800/80 text-gray-300 border-gray-700' : 'bg-white/80 text-gray-500 border-gray-100'}`}>
                     Thinking...
                   </div>
                 )}
@@ -626,7 +633,7 @@ function AppContent() {
                 {/* Speech bubble - shows Lumi's response */}
                 {speechBubble.visible && (
                   <div
-                    className="absolute bottom-[280px] z-20 max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-lg bg-white text-gray-800 border border-gray-100 transition-opacity duration-500"
+                    className={`absolute bottom-[280px] z-20 max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-lg border transition-opacity duration-500 ${isDark ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-800 border-gray-100'}`}
                     style={{ opacity: speechBubble.opacity }}
                   >
                     {parseFormattedText(speechBubble.text)}
@@ -653,7 +660,7 @@ function AppContent() {
                       <button
                         key={`${item.title}-${item.amount}-${index}`}
                         onClick={() => presetMessage(item.presetText)}
-                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                        className={`flex-shrink-0 px-4 py-2 rounded-xl shadow-sm border text-sm whitespace-nowrap active:scale-95 transition ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-gray-800'}`}
                       >
                         {item.displayText}
                       </button>
@@ -663,19 +670,19 @@ function AppContent() {
                     <>
                       <button
                         onClick={() => presetMessage('Bought Coffee $6')}
-                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                        className={`flex-shrink-0 px-4 py-2 rounded-xl shadow-sm border text-sm whitespace-nowrap active:scale-95 transition ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-gray-800'}`}
                       >
                         ☕ Coffee $6
                       </button>
                       <button
                         onClick={() => presetMessage('Transport $2')}
-                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                        className={`flex-shrink-0 px-4 py-2 rounded-xl shadow-sm border text-sm whitespace-nowrap active:scale-95 transition ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-gray-800'}`}
                       >
                         🚆 Train $2
                       </button>
                       <button
                         onClick={() => presetMessage('Lunch $12')}
-                        className="flex-shrink-0 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm whitespace-nowrap active:scale-95 transition"
+                        className={`flex-shrink-0 px-4 py-2 rounded-xl shadow-sm border text-sm whitespace-nowrap active:scale-95 transition ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-gray-800'}`}
                       >
                         🍜 Lunch $12
                       </button>
@@ -684,8 +691,8 @@ function AppContent() {
                 </div>
               </div>
 
-              <div className="p-4 bg-white border-t border-gray-100 pb-20 md:pb-4">
-                <div className="flex gap-2 bg-gray-50 p-2 rounded-full border border-gray-200">
+              <div className={`p-4 border-t pb-20 md:pb-4 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+                <div className={`flex gap-2 p-2 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                   <input
                     type="text"
                     value={inputText}
@@ -697,7 +704,7 @@ function AppContent() {
                       }
                     }}
                     placeholder="Type 'Spent $12 on...'"
-                    className="flex-1 bg-transparent px-4 outline-none text-gray-700"
+                    className={`flex-1 bg-transparent px-4 outline-none ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-700'}`}
                   />
                   <button
                     onClick={() => {
@@ -716,14 +723,14 @@ function AppContent() {
           )}
           
           {activeTab === 'dashboard' && (
-            <div className="relative flex flex-col h-full bg-gray-50 px-4 pt-6 pb-24 overflow-y-auto">
+            <div className={`relative flex flex-col h-full px-4 pt-6 pb-24 overflow-y-auto ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
               {managerLoading ? (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-gray-500">Loading...</div>
+                  <div className={isDark ? 'text-gray-400' : 'text-gray-500'}>Loading...</div>
                 </div>
               ) : (
                 <>
-                  <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-6 rounded-3xl shadow-lg mb-6">
+                  <div className={`p-6 rounded-3xl shadow-lg mb-6 ${isDark ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white' : 'bg-gradient-to-r from-gray-800 to-gray-700 text-white'}`}>
                     <div className="flex justify-between items-start gap-4">
                       <div>
                         <p className="text-gray-300 text-sm mb-1">Total Balance</p>
@@ -748,10 +755,10 @@ function AppContent() {
                     </div>
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-gray-100">
+                  <div className={`p-6 rounded-3xl shadow-sm mb-6 border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-800">{getMonthName()} Analysis</h3>
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Monthly</span>
+                      <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{getMonthName()} Analysis</h3>
+                      <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>Monthly</span>
                     </div>
                     {categoryData.length > 0 ? (
                       <div className="flex items-center justify-center gap-8 mb-4">
@@ -786,28 +793,28 @@ function AppContent() {
                             <div key={cat.name} className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }}></div>
                               <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-gray-800">{cat.name}</span>
-                                <span className="text-xs text-gray-500">{cat.percentage.toFixed(0)}%</span>
+                                <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>{cat.name}</span>
+                                <span className={isDark ? 'text-xs text-gray-400' : 'text-xs text-gray-500'}>{cat.percentage.toFixed(0)}%</span>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-500 text-sm">
+                      <div className={`text-center py-8 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         No spending data for this month yet
                       </div>
                     )}
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-gray-100">
+                  <div className={`p-6 rounded-3xl shadow-sm mb-6 border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-800">Spending Calendar</h3>
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">
+                      <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Spending Calendar</h3>
+                      <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
                         {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
                       </span>
                     </div>
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-medium text-gray-600 mb-2">
+                    <div className={`grid grid-cols-7 gap-2 text-center text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       <div>Sun</div>
                       <div>Mon</div>
                       <div>Tue</div>
@@ -852,16 +859,24 @@ function AppContent() {
                             <div
                               key={day}
                               className={`aspect-square flex flex-col items-center justify-center rounded-lg relative ${
-                                isBad 
-                                  ? 'bg-red-50 text-red-600' 
-                                  : isGood 
-                                    ? 'bg-green-50 text-green-600' 
-                                    : hasExpenses || hasIncome
-                                      ? 'bg-blue-50 text-blue-600'
-                                      : 'bg-transparent text-gray-700'
-                              } ${isToday ? 'ring-2 ring-blue-400' : ''}`}
+                                isDark
+                                  ? (isBad 
+                                      ? 'bg-red-900/30 text-red-400' 
+                                      : isGood 
+                                        ? 'bg-green-900/30 text-green-400' 
+                                        : hasExpenses || hasIncome
+                                          ? 'bg-blue-900/30 text-blue-400'
+                                          : 'bg-transparent text-gray-400')
+                                  : (isBad 
+                                      ? 'bg-red-50 text-red-600' 
+                                      : isGood 
+                                        ? 'bg-green-50 text-green-600' 
+                                        : hasExpenses || hasIncome
+                                          ? 'bg-blue-50 text-blue-600'
+                                          : 'bg-transparent text-gray-700')
+                              } ${isToday ? (isDark ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-400') : ''}`}
                             >
-                              <span className={`text-sm font-semibold ${isToday ? 'text-blue-600' : ''}`}>
+                              <span className={`text-sm font-semibold ${isToday ? (isDark ? 'text-blue-400' : 'text-blue-600') : ''}`}>
                                 {day}
                               </span>
                               {hasExpenses && (
@@ -885,17 +900,17 @@ function AppContent() {
                         });
                       })()}
                     </div>
-                    <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+                    <div className={`mt-4 flex items-center justify-center gap-4 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-red-50 border border-red-200"></div>
+                        <div className={`w-2 h-2 rounded-full border ${isDark ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`}></div>
                         <span>High Spending</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-green-50 border border-green-200"></div>
+                        <div className={`w-2 h-2 rounded-full border ${isDark ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`}></div>
                         <span>Low Spending</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-blue-50 border border-blue-200"></div>
+                        <div className={`w-2 h-2 rounded-full border ${isDark ? 'bg-blue-900/30 border-blue-800' : 'bg-blue-50 border-blue-200'}`}></div>
                         <span>Transactions</span>
                       </div>
                     </div>
@@ -903,30 +918,30 @@ function AppContent() {
 
                   <div className="mb-4">
                     <div className="flex items-center px-2 mb-4">
-                      <h3 className="font-bold text-gray-800">Recent Activity</h3>
+                      <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Recent Activity</h3>
                     </div>
                     <div className="space-y-3">
                       {managerTransactions.length > 0 ? (
                         managerTransactions.slice(0, 10).map((t) => {
                           const amount = parseFloat(t.amount || 0);
                           return (
-                            <div key={t.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
+                            <div key={t.id} className={`p-4 rounded-2xl flex justify-between items-center shadow-sm border hover:shadow-md transition-shadow ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-50'}`}>
                               <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className={`p-2 rounded-full flex-shrink-0 ${amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                <div className={`p-2 rounded-full flex-shrink-0 ${amount > 0 ? (isDark ? 'bg-green-900/50 text-green-400' : 'bg-green-100 text-green-600') : (isDark ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-600')}`}>
                                   {amount > 0 ? <Plus size={16} /> : <ShoppingBag size={16} />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-gray-800 truncate">{t.title || 'Untitled'}</p>
-                                  <p className="text-xs text-gray-500">{t.category || 'Other'}</p>
+                                  <p className={`font-bold truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>{t.title || 'Untitled'}</p>
+                                  <p className={isDark ? 'text-xs text-gray-400' : 'text-xs text-gray-500'}>{t.category || 'Other'}</p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`font-bold ${amount > 0 ? 'text-green-600' : 'text-gray-800'}`}>
+                                <span className={`font-bold ${amount > 0 ? 'text-green-600' : (isDark ? 'text-white' : 'text-gray-800')}`}>
                                   {amount > 0 ? '+' : ''}${Math.abs(amount).toFixed(2)}
                                 </span>
                                 <button
                                   onClick={() => router.push(`/transactions/edit/${t.id}`)}
-                                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition"
+                                  className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'}`}
                                   aria-label="Edit transaction"
                                 >
                                   <Edit2 size={16} />
@@ -941,7 +956,7 @@ function AppContent() {
                                       }
                                     }
                                   }}
-                                  className="p-2 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600 transition"
+                                  className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-red-900/50 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-gray-600 hover:text-red-600'}`}
                                   aria-label="Delete transaction"
                                 >
                                   <Trash2 size={16} />
@@ -951,7 +966,7 @@ function AppContent() {
                           );
                         })
                       ) : (
-                        <div className="text-center py-8 text-gray-500 text-sm">
+                        <div className={`text-center py-8 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           No transactions yet. Add your first transaction to get started!
                         </div>
                       )}
@@ -963,10 +978,10 @@ function AppContent() {
           )}
           
           {activeTab === 'social' && (
-            <div className="flex flex-col h-full bg-slate-50 px-4 pt-6 pb-24 overflow-y-auto relative">
+            <div className={`flex flex-col h-full px-4 pt-6 pb-24 overflow-y-auto relative ${isDark ? 'bg-black' : 'bg-slate-50'}`}>
               {/* Original leaderboard content with reduced opacity */}
               <div className="opacity-30 pointer-events-none">
-                <h2 className="text-center font-bold text-2xl text-slate-800 mb-6 flex items-center justify-center gap-2">
+                <h2 className={`text-center font-bold text-2xl mb-6 flex items-center justify-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
                   <Trophy className="w-6 h-6 text-yellow-500" /> Leaderboard
                 </h2>
 
@@ -1065,15 +1080,15 @@ function AppContent() {
 
               {/* Overlay "Stay Tuned!" message */}
               <div className="absolute inset-0 flex items-center justify-center z-10">
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 max-w-md w-full mx-4 text-center">
+                <div className={`rounded-2xl shadow-lg border p-8 max-w-md w-full mx-4 text-center ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
                   <div className="mb-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${isDark ? 'bg-yellow-900/50' : 'bg-yellow-100'}`}>
                       <Trophy size={32} className="text-yellow-600" />
                     </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Stay Tuned!</h2>
-                  <p className="text-gray-600 mb-4">The leaderboard is currently under construction.</p>
-                  <p className="text-sm text-gray-500">We're working hard to bring you amazing features soon!</p>
+                  <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Stay Tuned!</h2>
+                  <p className={isDark ? 'text-gray-300 mb-4' : 'text-gray-600 mb-4'}>The leaderboard is currently under construction.</p>
+                  <p className={isDark ? 'text-sm text-gray-400' : 'text-sm text-gray-500'}>We're working hard to bring you amazing features soon!</p>
                 </div>
               </div>
             </div>
@@ -1090,10 +1105,10 @@ function AppContent() {
           </button>
         )}
 
-        <div className="bg-white border-t border-gray-200 flex justify-around items-center p-4 pb-6 shadow-lg z-20">
+        <div className={`border-t flex justify-around items-center p-4 pb-6 shadow-lg z-20 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center gap-1 transition ${activeTab === 'dashboard' ? 'text-green-600' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-1 transition ${activeTab === 'dashboard' ? 'text-green-600' : (isDark ? 'text-gray-500' : 'text-gray-400')}`}
           >
             <BarChart2 size={24} strokeWidth={activeTab === 'dashboard' ? 2.5 : 2} />
             <span className="text-[10px] font-bold">Manager</span>
@@ -1107,7 +1122,7 @@ function AppContent() {
 
           <button
             onClick={() => setActiveTab('social')}
-            className={`flex flex-col items-center gap-1 transition ${activeTab === 'social' ? 'text-green-600' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-1 transition ${activeTab === 'social' ? 'text-green-600' : (isDark ? 'text-gray-500' : 'text-gray-400')}`}
           >
             <Trophy size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} />
             <span className="text-[10px] font-bold">Friends</span>
@@ -1121,10 +1136,10 @@ function AppContent() {
 export default function AppPage() {
   return (
     <Suspense fallback={
-      <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 flex items-center justify-center">
+      <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 dark:bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600 dark:text-white">Loading...</p>
         </div>
       </div>
     }>

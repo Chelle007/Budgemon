@@ -11,7 +11,8 @@ export default function EditTransactionPage() {
   const router = useRouter();
   const params = useParams();
   const transactionId = params.id;
-  const { user, loading, cards, transactions, handleTransactionUpdate, handleTransactionDelete, fetchTransactions } = useUser();
+  const { user, loading, cards, transactions, handleTransactionUpdate, handleTransactionDelete, fetchTransactions, darkMode } = useUser();
+  const isDark = darkMode || false;
   const today = new Date().toISOString().split('T')[0];
   
   const [title, setTitle] = useState('');
@@ -131,10 +132,10 @@ export default function EditTransactionPage() {
 
   if (loading || isLoadingTransaction) {
     return (
-      <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 flex items-center justify-center">
+      <div className={`font-sans max-w-md mx-auto h-screen flex items-center justify-center ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className={isDark ? 'text-white' : 'text-gray-600'}>Loading...</p>
         </div>
       </div>
     );
@@ -146,12 +147,12 @@ export default function EditTransactionPage() {
 
   if (!transaction) {
     return (
-      <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 flex items-center justify-center">
+      <div className={`font-sans max-w-md mx-auto h-screen flex items-center justify-center ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
         <div className="text-center px-6">
-          <p className="text-gray-600 mb-4">{error || 'Transaction not found.'}</p>
+          <p className={isDark ? 'text-gray-300 mb-4' : 'text-gray-600 mb-4'}>{error || 'Transaction not found.'}</p>
           <button
             onClick={() => router.push('/app?tab=dashboard')}
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className={`px-4 py-2 text-white rounded-lg transition ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'}`}
           >
             Back to Dashboard
           </button>
@@ -161,21 +162,21 @@ export default function EditTransactionPage() {
   }
 
   return (
-    <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 shadow-2xl overflow-hidden">
-      <div className="flex flex-col h-full bg-white">
-        <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+    <div className={`font-sans max-w-md mx-auto h-screen shadow-2xl overflow-hidden ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
+      <div className={`flex flex-col h-full ${isDark ? 'bg-black' : 'bg-white'}`}>
+        <div className={`flex items-center justify-between p-4 border-b sticky top-0 z-10 ${isDark ? 'bg-black border-gray-800' : 'bg-white border-gray-100'}`}>
           <button
             onClick={() => router.push('/app?tab=dashboard')}
-            className="p-2 rounded-full border border-gray-200 hover:bg-gray-50"
+            className={`p-2 rounded-full border transition ${isDark ? 'border-gray-700 hover:bg-gray-900 text-white' : 'border-gray-200 hover:bg-gray-50'}`}
             aria-label="Back to manager"
           >
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-lg font-bold text-gray-800">Edit Transaction</h2>
+          <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Edit Transaction</h2>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="p-2 rounded-full border border-red-200 hover:bg-red-50 text-red-600 disabled:opacity-50"
+            className={`p-2 rounded-full border transition disabled:opacity-50 ${isDark ? 'border-red-800 hover:bg-red-900/50 text-red-400' : 'border-red-200 hover:bg-red-50 text-red-600'}`}
             aria-label="Delete transaction"
           >
             <Trash2 size={20} />
@@ -190,7 +191,9 @@ export default function EditTransactionPage() {
                 type="button"
                 onClick={() => setType(option)}
                 className={`flex-1 py-3 rounded-2xl border font-semibold capitalize ${
-                  type === option ? 'bg-gray-900 text-white border-gray-900' : 'bg-gray-50 text-gray-600 border-gray-100'
+                  type === option 
+                    ? (isDark ? 'bg-gray-700 text-white border-gray-700' : 'bg-gray-900 text-white border-gray-900')
+                    : (isDark ? 'bg-gray-800 text-gray-300 border-gray-700' : 'bg-gray-50 text-gray-600 border-gray-100')
                 }`}
               >
                 {option}
@@ -199,19 +202,19 @@ export default function EditTransactionPage() {
           </div>
 
           <label className="block">
-            <span className="text-sm font-semibold text-gray-600">Title</span>
+            <span className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Title</span>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Groceries at Trader Joe's"
-              className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 focus:outline-none focus:ring-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-gray-600' : 'border-gray-200 text-gray-800 focus:ring-gray-900/10'}`}
             />
           </label>
 
           <div className="grid grid-cols-2 gap-4">
             <label className="block">
-              <span className="text-sm font-semibold text-gray-600">Amount ($)</span>
+              <span className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Amount ($)</span>
               <input
                 type="number"
                 min="0"
@@ -219,24 +222,24 @@ export default function EditTransactionPage() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                className={`mt-2 w-full rounded-2xl border px-4 py-3 focus:outline-none focus:ring-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-gray-600' : 'border-gray-200 text-gray-800 focus:ring-gray-900/10'}`}
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-semibold text-gray-600">Date</span>
+              <span className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Date</span>
               <input
                 type="date"
                 value={date}
                 max={today}
                 onChange={(e) => setDate(e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                className={`mt-2 w-full rounded-2xl border px-4 py-3 focus:outline-none focus:ring-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-gray-600' : 'border-gray-200 text-gray-800 focus:ring-gray-900/10'}`}
               />
             </label>
           </div>
 
           <label className="block">
-            <span className="text-sm font-semibold text-gray-600">Category</span>
+            <span className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Category</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {CATEGORY_OPTIONS.map((option) => (
                 <button
@@ -245,8 +248,8 @@ export default function EditTransactionPage() {
                   onClick={() => setCategory(option)}
                   className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold ${
                     category === option
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-gray-50 text-gray-600 border-gray-100'
+                      ? (isDark ? 'bg-gray-700 text-white border-gray-700' : 'bg-gray-900 text-white border-gray-900')
+                      : (isDark ? 'bg-gray-800 text-gray-300 border-gray-700' : 'bg-gray-50 text-gray-600 border-gray-100')
                   }`}
                 >
                   {option}
@@ -258,15 +261,15 @@ export default function EditTransactionPage() {
 
           {cards.length > 0 && (
             <label className="block">
-              <span className="text-sm font-semibold text-gray-600">Card</span>
+              <span className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Card</span>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedCardId(null)}
                   className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold ${
                     selectedCardId === null
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-gray-50 text-gray-600 border-gray-100'
+                      ? (isDark ? 'bg-gray-700 text-white border-gray-700' : 'bg-gray-900 text-white border-gray-900')
+                      : (isDark ? 'bg-gray-800 text-gray-300 border-gray-700' : 'bg-gray-50 text-gray-600 border-gray-100')
                   }`}
                 >
                   <span>None</span>
@@ -279,8 +282,8 @@ export default function EditTransactionPage() {
                     onClick={() => setSelectedCardId(card.id)}
                     className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold relative overflow-hidden ${
                       selectedCardId === card.id
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-gray-50 text-gray-600 border-gray-100'
+                        ? (isDark ? 'bg-gray-700 text-white border-gray-700' : 'bg-gray-900 text-white border-gray-900')
+                        : (isDark ? 'bg-gray-800 text-gray-300 border-gray-700' : 'bg-gray-50 text-gray-600 border-gray-100')
                     }`}
                   >
                     <div className="flex items-center gap-2 flex-1">
@@ -298,13 +301,13 @@ export default function EditTransactionPage() {
           )}
 
           <label className="block">
-            <span className="text-sm font-semibold text-gray-600">Notes (optional)</span>
+            <span className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Notes (optional)</span>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               placeholder="Anything you want to remember about this transaction?"
-              className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/10 resize-none"
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 focus:outline-none focus:ring-2 resize-none ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-gray-600' : 'border-gray-200 text-gray-800 focus:ring-gray-900/10'}`}
             />
           </label>
 
@@ -313,14 +316,14 @@ export default function EditTransactionPage() {
           <div className="pt-2 pb-10">
             <button
               type="submit"
-              className="w-full py-4 rounded-2xl bg-gray-900 text-white font-bold shadow-lg shadow-gray-900/10 hover:bg-gray-800 transition"
+              className={`w-full py-4 rounded-2xl text-white font-bold shadow-lg transition ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-gray-800'}`}
             >
               Save Changes
             </button>
             <button
               type="button"
               onClick={() => router.push('/app?tab=dashboard')}
-              className="w-full mt-3 py-3 rounded-2xl text-gray-500 font-semibold hover:text-gray-700"
+              className={`w-full mt-3 py-3 rounded-2xl font-semibold transition ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Cancel
             </button>

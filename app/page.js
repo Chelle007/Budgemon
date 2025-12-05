@@ -6,7 +6,8 @@ import { useUser } from './context/UserContext';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, loading, petType } = useUser();
+  const { user, loading, petType, darkMode } = useUser();
+  const isDark = darkMode || false;
 
   useEffect(() => {
     if (loading) return;
@@ -21,10 +22,10 @@ export default function HomePage() {
   }, [user, loading, petType, router]);
 
   return (
-    <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 flex items-center justify-center">
+    <div className={`font-sans max-w-md mx-auto h-screen flex items-center justify-center ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
+        <p className={isDark ? 'text-white' : 'text-gray-600'}>Loading...</p>
       </div>
     </div>
   );

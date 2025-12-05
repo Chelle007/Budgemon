@@ -19,6 +19,7 @@ export function UserProvider({ children }) {
   const [cards, setCards] = useState([]);
   const [shopItems, setShopItems] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [darkMode, setDarkModeState] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -231,6 +232,17 @@ export function UserProvider({ children }) {
         if (equippedData.body_item_id) equippedObj.body = equippedData.body_item_id;
         if (equippedData.hand_item_id) equippedObj.hand = equippedData.hand_item_id;
         setEquipped(equippedObj);
+      }
+
+      // Load user settings (for dark mode)
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('user_settings')
+        .select('dark_mode')
+        .eq('user_id', userId)
+        .single();
+
+      if (settingsData && !settingsError) {
+        setDarkModeState(settingsData.dark_mode || false);
       }
 
       setLoading(false);
@@ -972,6 +984,25 @@ export function UserProvider({ children }) {
     }
   };
 
+  const setDarkMode = (value) => {
+    setDarkModeState(value);
+    // Apply dark mode class to document
+    if (value) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  // Apply dark mode to document when state changes
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   const value = {
     user,
     loading,
@@ -984,6 +1015,8 @@ export function UserProvider({ children }) {
     cards,
     shopItems: shopItems.length > 0 ? shopItems : SHOP_ITEMS,
     messages,
+    darkMode,
+    setDarkMode,
     selectPet,
     handleSendMessage,
     buyItem,

@@ -8,7 +8,8 @@ import { useUser } from '../context/UserContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading, darkMode } = useUser();
+  const isDark = darkMode || false;
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -130,17 +131,17 @@ export default function LoginPage() {
 
   if (userLoading) {
     return (
-      <div className="font-sans max-w-md mx-auto h-screen bg-gray-100 flex items-center justify-center">
+      <div className={`font-sans max-w-md mx-auto h-screen flex items-center justify-center ${isDark ? 'bg-black' : 'bg-gray-100'}`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className={isDark ? 'text-white' : 'text-gray-600'}>Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-green-50 to-green-100 p-8 justify-center items-center">
+    <div className={`flex flex-col h-screen p-8 justify-center items-center ${isDark ? 'bg-gradient-to-b from-gray-900 to-black' : 'bg-gradient-to-b from-green-50 to-green-100'}`}>
       <div className="w-32 h-32 rounded-full mb-8 shadow-xl overflow-hidden">
         <Image
           src="/app logo2.png"
@@ -150,8 +151,8 @@ export default function LoginPage() {
           className="object-cover w-full h-full"
         />
       </div>
-      <h1 className="text-3xl font-bold text-green-800 mb-2">BudgeMon</h1>
-      <p className="text-green-600 mb-8">Your AI Financial Companion</p>
+      <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-green-400' : 'text-green-800'}`}>BudgeMon</h1>
+      <p className={`mb-8 ${isDark ? 'text-green-300' : 'text-green-600'}`}>Your AI Financial Companion</p>
 
       <div className="w-full max-w-xs">
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -164,7 +165,7 @@ export default function LoginPage() {
                 if (error) setError('');
               }}
               placeholder="Full Name"
-              className="w-full p-4 rounded-xl border border-green-200 bg-white/80 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full p-4 rounded-xl border focus:outline-none focus:ring-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-green-500' : 'border-green-200 bg-white/80 text-gray-700 focus:ring-green-500'}`}
             />
           )}
           <input
@@ -176,7 +177,7 @@ export default function LoginPage() {
             }}
             placeholder="Email"
             required
-            className="w-full p-4 rounded-xl border border-green-200 bg-white/80 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full p-4 rounded-xl border focus:outline-none focus:ring-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-green-500' : 'border-green-200 bg-white/80 text-gray-700 focus:ring-green-500'}`}
           />
           <input
             type="password"
@@ -188,11 +189,11 @@ export default function LoginPage() {
             placeholder="Password"
             required
             minLength={6}
-            className="w-full p-4 rounded-xl border border-green-200 bg-white/80 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full p-4 rounded-xl border focus:outline-none focus:ring-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:ring-green-500' : 'border-green-200 bg-white/80 text-gray-700 focus:ring-green-500'}`}
           />
           
           {error && (
-            <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-700 text-sm font-medium">
+            <div className={`p-3 border rounded-xl text-sm font-medium ${isDark ? 'bg-red-900/30 border-red-800 text-red-300' : 'bg-red-50 border-red-300 text-red-700'}`}>
               <div className="flex items-center gap-2">
                 <span>⚠️</span>
                 <span>{error}</span>
@@ -201,12 +202,12 @@ export default function LoginPage() {
           )}
           
           {message && (
-            <div className="p-4 bg-green-50 border-2 border-green-300 rounded-xl text-green-800 text-sm shadow-sm">
+            <div className={`p-4 border-2 rounded-xl text-sm shadow-sm ${isDark ? 'bg-green-900/30 border-green-800 text-green-300' : 'bg-green-50 border-green-300 text-green-800'}`}>
               <div className="flex items-start gap-3">
                 <span className="text-xl flex-shrink-0">✅</span>
                 <div className="flex-1">
                   <p className="font-semibold mb-1">Account Created!</p>
-                  <p className="text-green-700 leading-relaxed">{message}</p>
+                  <p className={`leading-relaxed ${isDark ? 'text-green-300' : 'text-green-700'}`}>{message}</p>
                   {message.includes('confirmation email') && (
                     <button
                       type="button"
@@ -214,7 +215,7 @@ export default function LoginPage() {
                         setMessage('');
                         setIsSignUp(false);
                       }}
-                      className="mt-3 text-green-700 hover:text-green-800 font-semibold text-sm underline"
+                      className={`mt-3 font-semibold text-sm underline ${isDark ? 'text-green-300 hover:text-green-200' : 'text-green-700 hover:text-green-800'}`}
                     >
                       Continue to Login →
                     </button>
@@ -223,7 +224,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setMessage('')}
-                  className="text-green-600 hover:text-green-800 flex-shrink-0"
+                  className={`flex-shrink-0 ${isDark ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-800'}`}
                   aria-label="Close"
                 >
                   ✕
@@ -235,13 +236,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-green-600 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'}`}
           >
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Log In'}
           </button>
         </form>
 
-        <div className="flex justify-between text-sm text-green-700 mt-4">
+        <div className={`flex justify-between text-sm mt-4 ${isDark ? 'text-green-300' : 'text-green-700'}`}>
           <button
             type="button"
             onClick={handleForgotPassword}
