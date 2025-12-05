@@ -25,10 +25,11 @@ export async function POST(request) {
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    // Build context about available cards
+    // Build context about available cards with balances
+    const totalCardBalance = cards.reduce((sum, c) => sum + (parseFloat(c.balance) || 0), 0);
     const cardsList = cards.length > 0 
-      ? `Available cards: ${cards.map(c => `${c.name} (balance: $${c.balance || 0})`).join(', ')}`
-      : 'No cards available';
+      ? `User's cards/accounts:\n${cards.map(c => `- ${c.name}: $${(parseFloat(c.balance) || 0).toFixed(2)}`).join('\n')}\nTotal balance across all cards: $${totalCardBalance.toFixed(2)}`
+      : 'No cards/accounts set up yet';
 
     // Build transaction history context (last 50 transactions)
     const recentTransactions = transactions.slice(0, 50);
@@ -57,15 +58,16 @@ export async function POST(request) {
 
 Your tasks:
 1. If the user is LOGGING a new transaction (expense or income), extract the details
-2. If the user is ASKING a question about their spending/finances, analyze their transaction history and provide a helpful answer
+2. If the user is ASKING a question about their spending/finances/card balances, provide a helpful answer using the data below
 
 ${cardsList}
 
 ${transactionHistory}
 
 Summary stats:
-- Total expenses: $${totalExpenses.toFixed(2)}
-- Total income: $${totalIncome.toFixed(2)}
+- Total balance (all cards): $${totalCardBalance.toFixed(2)}
+- Total expenses (from history): $${totalExpenses.toFixed(2)}
+- Total income (from history): $${totalIncome.toFixed(2)}
 - Spending by category: ${Object.entries(categoryTotals).map(([cat, amt]) => `${cat}: $${amt.toFixed(2)}`).join(', ') || 'None'}
 
 Return ONLY a valid JSON object with this structure:

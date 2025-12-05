@@ -440,6 +440,18 @@ function AppContent() {
   const petImage = petType === 'lumi' ? '/lumi.png' : '/luna.png';
   const petTalkGif = '/lumi-talk.gif';
 
+  // Helper function to parse **bold** text in responses
+  const parseFormattedText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
   const presetMessage = (text) => {
     handleSendMessage(text);
   };
@@ -560,7 +572,7 @@ function AppContent() {
                     className="absolute bottom-[280px] z-20 max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-lg bg-white text-gray-800 border border-gray-100 transition-opacity duration-500"
                     style={{ opacity: speechBubble.opacity }}
                   >
-                    {speechBubble.text}
+                    {parseFormattedText(speechBubble.text)}
                   </div>
                 )}
 
