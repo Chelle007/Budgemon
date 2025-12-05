@@ -12,7 +12,7 @@ export function UserProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [petType, setPetType] = useState(null);
   const [balance, setBalance] = useState(0);
-  const [gameCurrency, setGameCurrency] = useState(160);
+  const [gameCurrency, setGameCurrency] = useState(100);
   const [inventory, setInventory] = useState([]);
   const [equipped, setEquipped] = useState({});
   const [transactions, setTransactions] = useState([]);
@@ -33,7 +33,7 @@ export function UserProvider({ children }) {
         setUser(null);
         setPetType(null);
         setBalance(0);
-        setGameCurrency(160);
+        setGameCurrency(100);
         setInventory([]);
         setEquipped({});
         setTransactions([]);
@@ -73,7 +73,7 @@ export function UserProvider({ children }) {
 
   const autoSelectLumi = async (userId, existingGameCurrency = null) => {
     const initialMsg = { sender: 'bot', text: `Hi! I'm Lumi! Let's save money together! 😇` };
-    const currencyToUse = existingGameCurrency !== null ? existingGameCurrency : (gameCurrency || 160);
+    const currencyToUse = existingGameCurrency !== null ? existingGameCurrency : (gameCurrency || 100);
     
     try {
       const { data: existingProfile } = await supabase
@@ -366,6 +366,7 @@ export function UserProvider({ children }) {
         body: JSON.stringify({
           message: content,
           cards: cards,
+          transactions: transactions,
         }),
       });
 
@@ -476,8 +477,11 @@ export function UserProvider({ children }) {
               ? "Oops! I had trouble saving that transaction. Could you try again? 😅"
               : "I couldn't save that. Try again, and make sure you give me all the details. 💅";
         }
+      } else if (geminiData.isQuery && geminiData.queryResponse) {
+        // User asked a question about their finances - use Gemini's response
+        botResponse = geminiData.queryResponse;
       } else {
-        // Not a transaction, generate a conversational response
+        // Not a transaction or query, generate a conversational response
         botResponse =
           petType === 'lumi'
             ? "I'm here for you! Tell me about your spending or income, and I'll help you track it! 💕"
@@ -766,7 +770,7 @@ export function UserProvider({ children }) {
       setUser(null);
       setPetType(null);
       setBalance(0);
-      setGameCurrency(160);
+      setGameCurrency(100);
       setInventory([]);
       setEquipped({});
       setTransactions([]);

@@ -7,7 +7,7 @@ const CATEGORIES = ['Food', 'Shopping', 'Transport', 'Bills', 'Entertainment', '
 
 export async function POST(request) {
   try {
-    const { message, cards = [] } = await request.json();
+    const { message, cards = [], transactions = [] } = await request.json();
 
     if (!message || !message.trim()) {
       return NextResponse.json(
@@ -23,38 +23,72 @@ export async function POST(request) {
       );
     }
 
-    // Use gemini-pro which is widely available and stable
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    // Build the prompt with context about available cards
+    // Build context about available cards
     const cardsList = cards.length > 0 
-      ? `Available cards: ${cards.map(c => c.name).join(', ')}`
+      ? `Available cards: ${cards.map(c => `${c.name} (balance: $${c.balance || 0})`).join(', ')}`
       : 'No cards available';
 
-    const prompt = `You are a financial assistant that helps parse user messages about expenses and income. 
+    // Build transaction history context (last 50 transactions)
+    const recentTransactions = transactions.slice(0, 50);
+    const transactionHistory = recentTransactions.length > 0
+      ? `Recent transaction history:\n${recentTransactions.map(t => 
+          `- ${t.date}: ${t.title} | $${Math.abs(t.amount).toFixed(2)} ${t.amount < 0 ? '(expense)' : '(income)'} | Category: ${t.category || 'General'}`
+        ).join('\n')}`
+      : 'No transaction history available';
 
-Analyze the following user message and extract transaction information. Return ONLY a valid JSON object with the following structure:
+    // Calculate some stats for context
+    const totalExpenses = recentTransactions
+      .filter(t => t.amount < 0)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const totalIncome = recentTransactions
+      .filter(t => t.amount > 0)
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    // Category breakdown
+    const categoryTotals = {};
+    recentTransactions.filter(t => t.amount < 0).forEach(t => {
+      const cat = t.category || 'General';
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + Math.abs(t.amount);
+    });
+
+    const prompt = `You are Lumi, a friendly and helpful financial companion assistant. You help users track their spending and answer questions about their finances.
+
+Your tasks:
+1. If the user is LOGGING a new transaction (expense or income), extract the details
+2. If the user is ASKING a question about their spending/finances, analyze their transaction history and provide a helpful answer
+
+${cardsList}
+
+${transactionHistory}
+
+Summary stats:
+- Total expenses: $${totalExpenses.toFixed(2)}
+- Total income: $${totalIncome.toFixed(2)}
+- Spending by category: ${Object.entries(categoryTotals).map(([cat, amt]) => `${cat}: $${amt.toFixed(2)}`).join(', ') || 'None'}
+
+Return ONLY a valid JSON object with this structure:
 {
-  "isTransaction": boolean,  // true if this is about adding a transaction (expense or income)
-  "type": "expense" | "income" | null,  // null if not a transaction
-  "title": string,  // A short, descriptive title (e.g., "Coffee", "Salary", "Groceries")
-  "amount": number | null,  // The amount as a number (null if not found)
-  "category": string | null,  // One of: ${CATEGORIES.join(', ')} (null if not a transaction)
-  "card": string | null  // The card name if mentioned, or null. Must match one of the available cards: ${cards.map(c => c.name).join(', ')}
+  "isTransaction": boolean,  // true ONLY if user is adding a NEW transaction
+  "isQuery": boolean,  // true if user is asking a question about their finances/history
+  "type": "expense" | "income" | null,  // for new transactions only
+  "title": string | null,  // for new transactions: short title like "Coffee", "Salary"
+  "amount": number | null,  // for new transactions: the amount
+  "category": string | null,  // One of: ${CATEGORIES.join(', ')}
+  "card": string | null,  // card name if mentioned
+  "queryResponse": string | null  // for queries: your friendly, helpful response about their finances
 }
 
 Rules:
-1. If the message is about spending money, buying something, or an expense, set type to "expense" and isTransaction to true
-2. If the message is about receiving money, salary, income, or earning, set type to "income" and isTransaction to true
-3. Extract the amount from the message (look for numbers with $ or currency symbols)
-4. Infer the category from context (e.g., "coffee" or "lunch" = Food, "train" or "bus" = Transport, "netflix" = Subscription, etc.)
-5. If a card name is mentioned, extract it and match it to the available cards list
-6. If the message is just a conversation (not about transactions), set isTransaction to false
-7. Default category to "General" if you can't determine a specific category
-8. Default to "expense" type if it's clearly spending but type is ambiguous
+1. For NEW transactions: set isTransaction=true, extract title/amount/category/type
+2. For QUESTIONS about finances (e.g., "how much did I spend on food?", "what was my last purchase?"): set isQuery=true, provide queryResponse
+3. If asking about spending, calculate from the transaction history provided
+4. Be friendly and encouraging in queryResponse - you're Lumi, a supportive companion!
+5. If the message is just casual conversation (hi, hello, etc.), set isQuery=true and respond warmly
+6. Categories: ${CATEGORIES.join(', ')}
 
 User message: "${message}"
-${cardsList}
 
 Return ONLY the JSON object, no other text.`;
 
@@ -65,13 +99,11 @@ Return ONLY the JSON object, no other text.`;
     // Try to extract JSON from the response
     let parsedResponse;
     try {
-      // Remove markdown code blocks if present
       const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       parsedResponse = JSON.parse(cleanedText);
     } catch (parseError) {
       console.error('Error parsing Gemini response:', parseError);
       console.error('Raw response:', text);
-      // Fallback: try to extract JSON from the text
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         parsedResponse = JSON.parse(jsonMatch[0]);
@@ -82,8 +114,7 @@ Return ONLY the JSON object, no other text.`;
 
     console.log('Gemini parsed response:', JSON.stringify(parsedResponse, null, 2));
 
-    // Validate and normalize the response
-    // Parse amount - handle both number and string responses from Gemini
+    // Parse amount - handle both number and string responses
     let parsedAmount = null;
     if (parsedResponse.amount !== null && parsedResponse.amount !== undefined) {
       const numAmount = typeof parsedResponse.amount === 'number' 
@@ -96,11 +127,13 @@ Return ONLY the JSON object, no other text.`;
 
     const normalized = {
       isTransaction: parsedResponse.isTransaction === true || parsedResponse.isTransaction === 'true',
+      isQuery: parsedResponse.isQuery === true || parsedResponse.isQuery === 'true',
       type: parsedResponse.type === 'expense' || parsedResponse.type === 'income' ? parsedResponse.type : null,
       title: parsedResponse.title || 'New Transaction',
       amount: parsedAmount,
       category: parsedResponse.category && CATEGORIES.includes(parsedResponse.category) ? parsedResponse.category : 'General',
       card: parsedResponse.card || null,
+      queryResponse: parsedResponse.queryResponse || null,
     };
 
     console.log('Normalized response:', JSON.stringify(normalized, null, 2));
