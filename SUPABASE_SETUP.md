@@ -28,7 +28,14 @@ This guide will help you connect your Budgemon app to Supabase.
    - **Project URL** (under "Project URL")
    - **anon/public key** (under "Project API keys")
 
-## Step 4: Set Up Environment Variables
+## Step 4: Get Your Gemini API Key
+
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the API key (you'll need it in the next step)
+
+## Step 5: Set Up Environment Variables
 
 1. Create a file named `.env.local` in the root of your project (same directory as `package.json`)
 2. Add the following content:
@@ -36,18 +43,21 @@ This guide will help you connect your Budgemon app to Supabase.
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 3. Replace `your_project_url_here` with your Project URL from Step 3
 4. Replace `your_anon_key_here` with your anon/public key from Step 3
+5. Replace `your_gemini_api_key_here` with your Gemini API key from Step 4
 
 Example:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+GEMINI_API_KEY=AIzaSy...
 ```
 
-## Step 5: Verify Setup
+## Step 6: Verify Setup
 
 1. Make sure your `.env.local` file is in the root directory
 2. Restart your Next.js development server:
@@ -67,13 +77,19 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ✅ Payment cards  
 ✅ Shop inventory and equipped items  
 ✅ Chat messages with companion  
+✅ AI-powered transaction parsing with Gemini  
 
 ## Troubleshooting
 
 ### "Missing Supabase environment variables" error
 - Make sure `.env.local` exists in the root directory
-- Make sure the variable names start with `NEXT_PUBLIC_`
+- Make sure the variable names start with `NEXT_PUBLIC_` for client-side variables
 - Restart your dev server after creating/modifying `.env.local`
+
+### "Gemini API key not configured" error
+- Make sure `GEMINI_API_KEY` is set in your `.env.local` file
+- The Gemini API key does NOT need `NEXT_PUBLIC_` prefix (it's server-side only)
+- Restart your dev server after adding the key
 
 ### Authentication not working
 - Check that Row Level Security (RLS) policies were created (they're in the schema)

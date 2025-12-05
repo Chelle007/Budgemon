@@ -318,51 +318,8 @@ export function UserProvider({ children }) {
     let botResponse = '';
     const lowerInput = content.toLowerCase();
 
-    if (lowerInput.includes('spent') || lowerInput.includes('bought') || lowerInput.includes('buy')) {
-      const amountMatch = content.match(/\$?\s*(\d+(\.\d+)?)/);
-      const val = amountMatch ? parseFloat(amountMatch[1]) : 10;
-
-      let title = 'New Expense';
-      const beforeAmount = content.split('$')[0] || content;
-      const cleanedTitle = beforeAmount
-        .replace(/spent|bought|buy|on|for|i\'?m?|am/gi, ' ')
-        .trim();
-
-      if (cleanedTitle) {
-        title = cleanedTitle.charAt(0).toUpperCase() + cleanedTitle.slice(1);
-      }
-
-      const newTransaction = {
-        title,
-        amount: -val,
-        date: new Date().toISOString().split('T')[0],
-        category: 'General',
-        type: 'expense',
-      };
-
-      try {
-        const { data, error } = await supabase
-          .from('transactions')
-          .insert({
-            user_id: user.id,
-            ...newTransaction,
-          })
-          .select()
-          .single();
-
-        if (!error && data) {
-          setTransactions((prev) => [data, ...prev]);
-          setBalance((prev) => prev - val);
-        }
-      } catch (error) {
-        console.error('Error saving transaction:', error);
-      }
-
-      botResponse =
-        petType === 'lumi'
-          ? `Okay! recorded $${val}. Remember, every penny counts! You're doing great! 🌟`
-          : `$${val}?! Seriously? Do you think money grows on trees? 😤`;
-    } else if (lowerInput.includes('save') || lowerInput.includes('salary')) {
+    // Check for save/salary commands (game currency rewards)
+    if (lowerInput.includes('save') || lowerInput.includes('salary')) {
       const newCurrency = gameCurrency + 20;
       setGameCurrency(newCurrency);
 
@@ -379,7 +336,134 @@ export function UserProvider({ children }) {
         petType === 'lumi'
           ? 'Yay! Saving is amazing! Here is 20 coins for being responsible! 🎉'
           : 'Finally, some sense. Keep that up and I might not scold you. +20 coins.';
-    } else {
+
+      setTimeout(async () => {
+        const botMessage = { sender: 'bot', text: botResponse };
+        setMessages((prev) => [...prev, botMessage]);
+
+        try {
+          await supabase
+            .from('chat_messages')
+            .insert({
+              user_id: user.id,
+              sender: 'bot',
+              text: botResponse,
+            });
+        } catch (error) {
+          console.error('Error saving bot message:', error);
+        }
+      }, 1000);
+      return;
+    }
+
+    // Use Gemini to parse the message
+    try {
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: content,
+          cards: cards,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to call Gemini API');
+      }
+
+      const geminiData = await response.json();
+
+      // If Gemini detected a transaction, save it
+      if (geminiData.isTransaction && geminiData.type && geminiData.amount) {
+        // Find card ID if card name was mentioned
+        let cardId = null;
+        if (geminiData.card) {
+          const matchedCard = cards.find(
+            (c) => c.name.toLowerCase() === geminiData.card.toLowerCase()
+          );
+          if (matchedCard) {
+            cardId = matchedCard.id;
+          }
+        }
+
+        const signedAmount =
+          geminiData.type === 'income'
+            ? Math.abs(geminiData.amount)
+            : -Math.abs(geminiData.amount);
+
+        try {
+          const { data, error } = await supabase
+            .from('transactions')
+            .insert({
+              user_id: user.id,
+              title: geminiData.title,
+              amount: signedAmount,
+              category: geminiData.category || 'General',
+              type: geminiData.type,
+              date: new Date().toISOString().split('T')[0],
+              card_id: cardId,
+            })
+            .select()
+            .single();
+
+          if (!error && data) {
+            setTransactions((prev) => [data, ...prev]);
+            setBalance((prev) => prev + signedAmount);
+
+            // Update card balance if card was specified
+            if (cardId) {
+              const card = cards.find((c) => c.id === cardId);
+              if (card) {
+                const newBalance = (parseFloat(card.balance) || 0) + signedAmount;
+                await supabase
+                  .from('cards')
+                  .update({ balance: newBalance })
+                  .eq('id', cardId)
+                  .eq('user_id', user.id);
+
+                setCards((prev) =>
+                  prev.map((c) =>
+                    c.id === cardId ? { ...c, balance: newBalance } : c
+                  )
+                );
+              }
+            }
+
+            // Generate bot response based on transaction type
+            const amountStr = Math.abs(geminiData.amount).toFixed(2);
+            if (geminiData.type === 'income') {
+              botResponse =
+                petType === 'lumi'
+                  ? `Great! I've recorded your income of $${amountStr}. Keep it up! 💰✨`
+                  : `$${amountStr} income recorded. Don't waste it all now. 💸`;
+            } else {
+              botResponse =
+                petType === 'lumi'
+                  ? `Okay! I've recorded $${amountStr} for ${geminiData.title}. Remember, every penny counts! You're doing great! 🌟`
+                  : `$${amountStr}?! Seriously? Do you think money grows on trees? 😤`;
+            }
+          } else {
+            throw error;
+          }
+        } catch (error) {
+          console.error('Error saving transaction:', error);
+          botResponse =
+            petType === 'lumi'
+              ? "Oops! I had trouble saving that transaction. Could you try again? 😅"
+              : "I couldn't save that. Try again, and make sure you give me all the details. 💅";
+        }
+      } else {
+        // Not a transaction, generate a conversational response
+        botResponse =
+          petType === 'lumi'
+            ? "I'm here for you! Tell me about your spending or income, and I'll help you track it! 💕"
+            : 'Make it quick. Are we saving or wasting money today? 💅';
+      }
+    } catch (error) {
+      console.error('Error calling Gemini API:', error);
+      // Fallback to simple response if Gemini fails
       botResponse =
         petType === 'lumi'
           ? "I'm here for you! Tell me about your spending or let's check your budget! 💕"
