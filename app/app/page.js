@@ -24,6 +24,7 @@ function AppContent() {
   const talkingTimeoutRef = useRef(null);
   const bubbleShowTimeoutRef = useRef(null);
   const previousMessagesLengthRef = useRef(messages.length);
+  const awaitingBotResponseRef = useRef(false);
   
   // ManagerView state
   const [managerTransactions, setManagerTransactions] = useState([]);
@@ -47,35 +48,47 @@ function AppContent() {
 
   // CompanionView: Watch for new bot messages
   useEffect(() => {
-    if (messages.length > previousMessagesLengthRef.current) {
-      const lastMessage = messages[messages.length - 1];
-      
-      if (lastMessage && lastMessage.sender === 'bot') {
-        if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
-        if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
-        if (talkingTimeoutRef.current) clearTimeout(talkingTimeoutRef.current);
-        if (bubbleShowTimeoutRef.current) clearTimeout(bubbleShowTimeoutRef.current);
-
-        setIsTalking(true);
-        setSpeechBubble({ text: lastMessage.text, visible: true, opacity: 0 });
-
-        bubbleShowTimeoutRef.current = setTimeout(() => {
-          setSpeechBubble((prev) => ({ ...prev, opacity: 1 }));
-        }, 2000);
-
-        talkingTimeoutRef.current = setTimeout(() => {
-          setIsTalking(false);
-        }, 5000);
-
-        speechTimeoutRef.current = setTimeout(() => {
-          setSpeechBubble((prev) => ({ ...prev, opacity: 0 }));
-          fadeTimeoutRef.current = setTimeout(() => {
-            setSpeechBubble({ text: '', visible: false, opacity: 0 });
-          }, 500);
-        }, 6500);
-      }
+    if (messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    
+    // Track when user sends a message (we're awaiting bot response)
+    if (lastMessage && lastMessage.sender === 'user' && messages.length > previousMessagesLengthRef.current) {
+      awaitingBotResponseRef.current = true;
     }
     
+    // Trigger animation only for bot responses to messages sent in this session
+    if (lastMessage && 
+        lastMessage.sender === 'bot' && 
+        awaitingBotResponseRef.current) {
+      
+      awaitingBotResponseRef.current = false;
+      
+      if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+      if (talkingTimeoutRef.current) clearTimeout(talkingTimeoutRef.current);
+      if (bubbleShowTimeoutRef.current) clearTimeout(bubbleShowTimeoutRef.current);
+
+      setIsTalking(true);
+      setSpeechBubble({ text: lastMessage.text, visible: true, opacity: 0 });
+
+      bubbleShowTimeoutRef.current = setTimeout(() => {
+        setSpeechBubble((prev) => ({ ...prev, opacity: 1 }));
+      }, 2000);
+
+      talkingTimeoutRef.current = setTimeout(() => {
+        setIsTalking(false);
+      }, 5000);
+
+      speechTimeoutRef.current = setTimeout(() => {
+        setSpeechBubble((prev) => ({ ...prev, opacity: 0 }));
+        fadeTimeoutRef.current = setTimeout(() => {
+          setSpeechBubble({ text: '', visible: false, opacity: 0 });
+        }, 500);
+      }, 6500);
+    }
+    
+    // Always update ref to track message count
     previousMessagesLengthRef.current = messages.length;
 
     return () => {
@@ -547,25 +560,15 @@ function AppContent() {
                 )}
 
                 <div className="relative w-64 h-64 flex items-center justify-center">
-                  {isTalking ? (
-                    <Image
-                      src={petTalkGif}
-                      alt={`${petName} talking`}
-                      width={256}
-                      height={256}
-                      className="w-full h-full object-contain"
-                      unoptimized
-                    />
-                  ) : (
-                    <Image
-                      src={petImage}
-                      alt={petName}
-                      width={256}
-                      height={256}
-                      className="w-full h-full object-contain"
-                      priority
-                    />
-                  )}
+                  <Image
+                    src={speechBubble.visible && speechBubble.opacity === 1 && petType === 'lumi' ? petTalkGif : petImage}
+                    alt={petName}
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-contain"
+                    priority
+                    unoptimized={speechBubble.visible && speechBubble.opacity === 1 && petType === 'lumi'}
+                  />
                 </div>
               </div>
 
@@ -598,12 +601,22 @@ function AppContent() {
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && inputText.trim()) {
+                        handleSendMessage(inputText);
+                        setInputText('');
+                      }
+                    }}
                     placeholder="Type 'Spent $12 on...'"
                     className="flex-1 bg-transparent px-4 outline-none text-gray-700"
                   />
                   <button
-                    onClick={() => handleSendMessage(inputText)}
+                    onClick={() => {
+                      if (inputText.trim()) {
+                        handleSendMessage(inputText);
+                        setInputText('');
+                      }
+                    }}
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition active:scale-90 ${getAccentColor()}`}
                   >
                     <Send size={18} />
