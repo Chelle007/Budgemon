@@ -593,7 +593,23 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Manage Plan */}
-                <ProfileItem icon={Layers} title="Manage Your Plan" subtitle="Upgrade to Pro now." isDark={isDark} />
+                <div 
+                  className={`flex items-center justify-between py-4 px-4 rounded-xl transition-colors cursor-pointer ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
+                  onClick={() => router.push('/plan')}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-gray-700' : 'bg-gray-900'}`}>
+                      <Layers size={20} className="text-white" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Manage Your Plan</span>
+                      <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Upgrade to Pro now.</span>
+                    </div>
+                  </div>
+                  <button className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                    <ChevronRight size={16} className={isDark ? 'text-gray-300' : 'text-gray-600'} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
