@@ -11,7 +11,7 @@ import { useUser } from '../context/UserContext';
 function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, petType, gameCurrency, equipped, balance, transactions, messages, handleSendMessage } = useUser();
+  const { user, loading, petType, gameCurrency, equipped, balance, transactions, messages, handleSendMessage, cards } = useUser();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'companion');
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef(null);
@@ -89,6 +89,13 @@ function AppContent() {
   // ManagerView: Load data
   useEffect(() => {
     if (user && activeTab === 'dashboard') {
+      // Immediately update balance from cards when dashboard becomes active
+      const totalCardBalance = cards.reduce((sum, card) => {
+        const cardBalance = parseFloat(card.balance) || 0;
+        return sum + (isNaN(cardBalance) ? 0 : cardBalance);
+      }, 0);
+      setManagerBalance(totalCardBalance);
+      
       loadManagerData();
 
       const channel = supabase
@@ -111,7 +118,134 @@ function AppContent() {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, activeTab]);
+  }, [user, activeTab, cards]);
+
+  // Update manager balance and transactions when UserContext cards or transactions change
+  // This runs whenever cards change, ensuring balance is always up-to-date
+  useEffect(() => {
+    // Always calculate total balance from all cards (like cards page)
+    // This ensures we always show the sum of card balances, not transaction-based balance
+    const totalCardBalance = cards.reduce((sum, card) => {
+      const cardBalance = parseFloat(card.balance) || 0;
+      return sum + (isNaN(cardBalance) ? 0 : cardBalance);
+    }, 0);
+    
+    // Only update if we're on dashboard tab
+    if (activeTab === 'dashboard') {
+      setManagerBalance(totalCardBalance);
+      
+      // Also update managerTransactions to keep them in sync for immediate updates
+      if (transactions.length > 0) {
+        setManagerTransactions(transactions);
+      }
+    }
+  }, [cards, transactions, activeTab]);
+
+  // Also recalculate spending breakdown and calendar when transactions change
+  // This ensures calendar is always synced with database transactions
+  useEffect(() => {
+    if (activeTab === 'dashboard' && transactions && transactions.length >= 0) {
+      // Use transactions from UserContext (which are synced with database)
+      // Recalculate spending breakdown and calendar data from current transactions
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      // Filter for current month transactions (expenses only for breakdown)
+      const currentMonthExpenses = transactions.filter((t) => {
+        if (!t.date) return false;
+        try {
+          const tDate = new Date(t.date);
+          if (isNaN(tDate.getTime())) return false;
+          return (
+            tDate.getMonth() === currentMonth &&
+            tDate.getFullYear() === currentYear &&
+            parseFloat(t.amount) < 0
+          );
+        } catch (e) {
+          return false;
+        }
+      });
+
+      // Filter for current month transactions (both expenses and income for calendar)
+      const currentMonthTransactions = transactions.filter((t) => {
+        if (!t.date) return false;
+        try {
+          const tDate = new Date(t.date);
+          if (isNaN(tDate.getTime())) return false;
+          return (
+            tDate.getMonth() === currentMonth &&
+            tDate.getFullYear() === currentYear
+          );
+        } catch (e) {
+          return false;
+        }
+      });
+
+      // Calculate spending breakdown (expenses only)
+      const breakdown = {};
+      let totalExpenses = 0;
+
+      currentMonthExpenses.forEach((t) => {
+        const category = t.category || 'Other';
+        const amount = Math.abs(parseFloat(t.amount || 0));
+        if (!isNaN(amount)) {
+          breakdown[category] = (breakdown[category] || 0) + amount;
+          totalExpenses += amount;
+        }
+      });
+
+      const breakdownPercentages = {};
+      Object.keys(breakdown).forEach((category) => {
+        breakdownPercentages[category] = totalExpenses > 0 ? (breakdown[category] / totalExpenses) * 100 : 0;
+      });
+
+      setSpendingBreakdown(breakdownPercentages);
+
+      // Update calendar data (both expenses and income)
+      const calendar = {};
+      currentMonthTransactions.forEach((t) => {
+        try {
+          const tDate = new Date(t.date);
+          if (!isNaN(tDate.getTime())) {
+            const day = tDate.getDate();
+            if (!calendar[day]) {
+              calendar[day] = { total: 0, expenses: 0, income: 0, count: 0 };
+            }
+            const amount = parseFloat(t.amount || 0);
+            if (!isNaN(amount)) {
+              if (amount < 0) {
+                // Expense
+                calendar[day].expenses += Math.abs(amount);
+                calendar[day].total += Math.abs(amount);
+              } else {
+                // Income
+                calendar[day].income += amount;
+              }
+              calendar[day].count += 1;
+            }
+          }
+        } catch (e) {
+          // Skip invalid dates
+        }
+      });
+
+      // Calculate average spending for status determination (expenses only)
+      const daysWithExpenses = Object.keys(calendar).filter(day => calendar[day].expenses > 0).length;
+      const avgSpending = daysWithExpenses > 0 ? totalExpenses / daysWithExpenses : 0;
+      const calendarWithStatus = {};
+      Object.keys(calendar).forEach((day) => {
+        const dayData = calendar[day];
+        calendarWithStatus[day] = {
+          ...dayData,
+          isBad: avgSpending > 0 && dayData.expenses > avgSpending * 1.5,
+          isGood: dayData.expenses === 0 || (avgSpending > 0 && dayData.expenses < avgSpending * 0.5),
+        };
+      });
+
+      setCalendarData(calendarWithStatus);
+    }
+  }, [transactions, activeTab]);
 
   const loadManagerData = async () => {
     if (!user || !user.id) {
@@ -137,12 +271,9 @@ function AppContent() {
 
       const safeTransactionsData = transactionsData || [];
       setManagerTransactions(safeTransactionsData);
-
-      const total = safeTransactionsData.reduce((sum, t) => {
-        const amount = parseFloat(t.amount || 0);
-        return sum + (isNaN(amount) ? 0 : amount);
-      }, 0);
-      setManagerBalance(total);
+      
+      // Also update transactions in UserContext if they're out of sync
+      // This ensures the calendar gets the latest data from database
 
       const currentMonthTransactions = safeTransactionsData.filter((t) => {
         if (!t.date) return false;
@@ -215,18 +346,40 @@ function AppContent() {
         setMonthComparison(null);
       }
 
+      // Calculate calendar data for current month (both expenses and income)
+      const allCurrentMonthTransactions = safeTransactionsData.filter((t) => {
+        if (!t.date) return false;
+        try {
+          const tDate = new Date(t.date);
+          if (isNaN(tDate.getTime())) return false;
+          return (
+            tDate.getMonth() === currentMonth &&
+            tDate.getFullYear() === currentYear
+          );
+        } catch (e) {
+          return false;
+        }
+      });
+
       const calendar = {};
-      currentMonthTransactions.forEach((t) => {
+      allCurrentMonthTransactions.forEach((t) => {
         try {
           const tDate = new Date(t.date);
           if (!isNaN(tDate.getTime())) {
             const day = tDate.getDate();
             if (!calendar[day]) {
-              calendar[day] = { total: 0, count: 0 };
+              calendar[day] = { total: 0, expenses: 0, income: 0, count: 0 };
             }
-            const amount = Math.abs(parseFloat(t.amount || 0));
+            const amount = parseFloat(t.amount || 0);
             if (!isNaN(amount)) {
-              calendar[day].total += amount;
+              if (amount < 0) {
+                // Expense
+                calendar[day].expenses += Math.abs(amount);
+                calendar[day].total += Math.abs(amount);
+              } else {
+                // Income
+                calendar[day].income += amount;
+              }
               calendar[day].count += 1;
             }
           }
@@ -235,15 +388,16 @@ function AppContent() {
         }
       });
 
-      const daysWithTransactions = Object.keys(calendar).length;
-      const avgSpending = daysWithTransactions > 0 ? currentMonthTotal / daysWithTransactions : 0;
+      // Determine good/bad days (bad = high spending, good = low/no spending)
+      const daysWithExpenses = Object.keys(calendar).filter(day => calendar[day].expenses > 0).length;
+      const avgSpending = daysWithExpenses > 0 ? currentMonthTotal / daysWithExpenses : 0;
       const calendarWithStatus = {};
       Object.keys(calendar).forEach((day) => {
         const dayData = calendar[day];
         calendarWithStatus[day] = {
           ...dayData,
-          isBad: avgSpending > 0 && dayData.total > avgSpending * 1.5,
-          isGood: dayData.total === 0 || (avgSpending > 0 && dayData.total < avgSpending * 0.5),
+          isBad: avgSpending > 0 && dayData.expenses > avgSpending * 1.5,
+          isGood: dayData.expenses === 0 || (avgSpending > 0 && dayData.expenses < avgSpending * 0.5),
         };
       });
 
@@ -251,7 +405,7 @@ function AppContent() {
     } catch (error) {
       console.error('Error loading manager data:', error);
       setManagerTransactions([]);
-      setManagerBalance(0);
+      // Don't set balance to 0 on error - it will be calculated from cards by the useEffect
       setSpendingBreakdown({});
       setMonthComparison(null);
       setCalendarData({});
@@ -545,25 +699,37 @@ function AppContent() {
                   </div>
 
                   <div className="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-gray-100">
-                    <h3 className="font-bold text-gray-800 mb-4">Spending Calendar</h3>
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-medium text-gray-600">
-                      <div>M</div>
-                      <div>T</div>
-                      <div>W</div>
-                      <div>T</div>
-                      <div>F</div>
-                      <div>S</div>
-                      <div>S</div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-gray-800">Spending Calendar</h3>
+                      <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">
+                        {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-medium text-gray-600 mb-2">
+                      <div>Sun</div>
+                      <div>Mon</div>
+                      <div>Tue</div>
+                      <div>Wed</div>
+                      <div>Thu</div>
+                      <div>Fri</div>
+                      <div>Sat</div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs">
                       {(() => {
                         const now = new Date();
-                        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+                        const currentMonth = now.getMonth();
+                        const currentYear = now.getFullYear();
+                        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
                         const days = [];
+                        const today = now.getDate();
 
+                        // Add empty cells for days before the first day of the month
                         for (let i = 0; i < firstDayOfMonth; i++) {
                           days.push(null);
                         }
 
+                        // Add all days of the current month
                         for (let day = 1; day <= daysInMonth; day++) {
                           days.push(day);
                         }
@@ -576,21 +742,60 @@ function AppContent() {
                           const dayData = calendarData[day];
                           const isBad = dayData?.isBad;
                           const isGood = dayData?.isGood;
+                          const hasExpenses = dayData?.expenses > 0;
+                          const hasIncome = dayData?.income > 0;
+                          const isToday = day === today;
 
                           return (
                             <div
                               key={day}
-                              className={`aspect-square flex flex-col items-center justify-center rounded-lg ${
-                                isBad ? 'bg-red-50 text-red-500' : isGood ? 'bg-green-50 text-green-600' : 'bg-transparent'
-                              }`}
+                              className={`aspect-square flex flex-col items-center justify-center rounded-lg relative ${
+                                isBad 
+                                  ? 'bg-red-50 text-red-600' 
+                                  : isGood 
+                                    ? 'bg-green-50 text-green-600' 
+                                    : hasExpenses || hasIncome
+                                      ? 'bg-blue-50 text-blue-600'
+                                      : 'bg-transparent text-gray-700'
+                              } ${isToday ? 'ring-2 ring-blue-400' : ''}`}
                             >
-                              {day}
-                              {isBad && <div className="w-1 h-1 bg-red-400 rounded-full mt-1"></div>}
-                              {isGood && <div className="w-1 h-1 bg-green-400 rounded-full mt-1"></div>}
+                              <span className={`text-sm font-semibold ${isToday ? 'text-blue-600' : ''}`}>
+                                {day}
+                              </span>
+                              {hasExpenses && (
+                                <span className="text-[8px] text-red-500 font-bold mt-0.5">
+                                  -${dayData.expenses.toFixed(0)}
+                                </span>
+                              )}
+                              {hasIncome && (
+                                <span className="text-[8px] text-green-500 font-bold mt-0.5">
+                                  +${dayData.income.toFixed(0)}
+                                </span>
+                              )}
+                              {!hasExpenses && !hasIncome && isBad && (
+                                <div className="w-1 h-1 bg-red-400 rounded-full mt-1"></div>
+                              )}
+                              {!hasExpenses && !hasIncome && isGood && (
+                                <div className="w-1 h-1 bg-green-400 rounded-full mt-1"></div>
+                              )}
                             </div>
                           );
                         });
                       })()}
+                    </div>
+                    <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-red-50 border border-red-200"></div>
+                        <span>High Spending</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-green-50 border border-green-200"></div>
+                        <span>Low Spending</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-blue-50 border border-blue-200"></div>
+                        <span>Transactions</span>
+                      </div>
                     </div>
                   </div>
 

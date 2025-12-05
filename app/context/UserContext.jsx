@@ -453,11 +453,33 @@ export function UserProvider({ children }) {
     if (!user) return;
 
     try {
+      // Check if a card with the same name already exists
+      const cardName = cardData.name?.trim();
+      if (!cardName) {
+        alert('Please enter a card name.');
+        return;
+      }
+
+      const existingCard = cards.find(card => card.name.toLowerCase() === cardName.toLowerCase());
+      if (existingCard) {
+        alert(`A card named "${existingCard.name}" already exists. Please use a different name.`);
+        return;
+      }
+
+      // Convert empty strings to null for optional fields and use database column names
+      const cleanedCardData = {
+        name: cardName,
+        card_number: cardData.cardNumber && cardData.cardNumber.trim() ? cardData.cardNumber.trim() : null,
+        cardholder_name: cardData.cardholderName && cardData.cardholderName.trim() ? cardData.cardholderName.trim() : null,
+        balance: cardData.balance || 0,
+        color: cardData.color || '#3B82F6',
+      };
+
       const { data, error } = await supabase
         .from('cards')
         .insert({
           user_id: user.id,
-          ...cardData,
+          ...cleanedCardData,
         })
         .select()
         .single();
@@ -469,7 +491,9 @@ export function UserProvider({ children }) {
       }
     } catch (error) {
       console.error('Error adding card:', error);
-      alert('Failed to add card. Please try again.');
+      // Show more specific error message
+      const errorMessage = error?.message || error?.details || 'Unknown error occurred';
+      alert(`Failed to add card: ${errorMessage}. Please try again.`);
     }
   };
 
@@ -477,9 +501,18 @@ export function UserProvider({ children }) {
     if (!user) return;
 
     try {
+      // Convert empty strings to null for optional fields and use database column names
+      const cleanedCardData = {
+        name: cardData.name?.trim() || '',
+        card_number: cardData.cardNumber && cardData.cardNumber.trim() ? cardData.cardNumber.trim() : null,
+        cardholder_name: cardData.cardholderName && cardData.cardholderName.trim() ? cardData.cardholderName.trim() : null,
+        balance: cardData.balance || 0,
+        color: cardData.color || '#3B82F6',
+      };
+
       const { data, error } = await supabase
         .from('cards')
-        .update(cardData)
+        .update(cleanedCardData)
         .eq('id', cardId)
         .eq('user_id', user.id)
         .select()
@@ -492,7 +525,9 @@ export function UserProvider({ children }) {
       }
     } catch (error) {
       console.error('Error updating card:', error);
-      alert('Failed to update card. Please try again.');
+      // Show more specific error message
+      const errorMessage = error?.message || error?.details || 'Unknown error occurred';
+      alert(`Failed to update card: ${errorMessage}. Please try again.`);
     }
   };
 

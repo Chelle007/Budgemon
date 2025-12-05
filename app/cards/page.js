@@ -35,10 +35,13 @@ export default function CardsPage() {
 
   const handleEdit = (card) => {
     setEditingCard(card);
+    // Handle both camelCase (from Supabase) and snake_case (direct from DB)
+    const cardNumber = card.cardNumber || card.card_number || '';
+    const cardholderName = card.cardholderName || card.cardholder_name || '';
     setFormData({
       name: card.name || '',
-      cardNumber: card.cardNumber || '',
-      cardholderName: card.cardholderName || '',
+      cardNumber: cardNumber,
+      cardholderName: cardholderName,
       balance: card.balance?.toString() || '',
       color: card.color || '#3B82F6',
     });
@@ -161,8 +164,8 @@ export default function CardsPage() {
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <h3 className="font-bold text-gray-800 text-lg mb-1">{card.name}</h3>
-                            {card.cardholderName && (
-                              <p className="text-sm text-gray-500">{card.cardholderName}</p>
+                            {(card.cardholderName || card.cardholder_name) && (
+                              <p className="text-sm text-gray-500">{card.cardholderName || card.cardholder_name}</p>
                             )}
                           </div>
                           <div className="flex gap-2">
@@ -186,11 +189,11 @@ export default function CardsPage() {
                             </button>
                           </div>
                         </div>
-                        {card.cardNumber && (
+                        {(card.cardNumber || card.card_number) && (
                           <div className="mb-4">
                             <p className="text-xs text-gray-400 mb-1">Card Number</p>
                             <p className="font-mono text-gray-700">
-                              {formatCardNumber(card.cardNumber)}
+                              {formatCardNumber(card.cardNumber || card.card_number)}
                             </p>
                           </div>
                         )}
