@@ -47,6 +47,8 @@ export default function MainAppLayout({
   onDeleteCard,
   isProfileOpen,
   onCloseProfile,
+  user,
+  onLogout,
   sleepMode = false,
 }) {
   return (
@@ -150,6 +152,8 @@ export default function MainAppLayout({
         <div className="absolute inset-0 z-40 bg-white">
           <ProfileView
             onClose={onCloseProfile}
+            user={user}
+            onLogout={onLogout}
             petType={petType}
             balance={balance}
             gameCurrency={gameCurrency}
